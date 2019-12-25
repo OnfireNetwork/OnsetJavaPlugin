@@ -20,7 +20,7 @@ We will be adding more data types later on.
 #### CreateJava
 Create a new JVM with a jar. Returns JVM ID.
 ```lua
-CreateJava(path)
+local jvmID = CreateJava(path)
 ```
 * **path** Relative path to the jar file, relative from the root server directory. Example: path/to/file.jar
 
