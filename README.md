@@ -2,7 +2,7 @@
 Authors: JanHolger, Digital
 
 ### Features
-* Create java JVMs.
+* Create JVMs.
 * Communicate from Lua <-> Java.
 
 ### Data Types we support
