@@ -15,6 +15,7 @@ int Plugin::CreateJava(std::string classPath)
 	while (this->jvms[id] != nullptr){
 		id++;
 	}
+
 	static std::stringstream optionString;
 	optionString << "-Djava.class.path=" << classPath;
 	JavaVMInitArgs vm_args;
@@ -37,11 +38,22 @@ void Plugin::DestroyJava(int id)
 	this->jenvs[id - 1] = nullptr;
 }
 
+JavaVM* Plugin::GetJavaVM(int id)
+{
+	return this->jvms[id - 1];
+}
+
+JNIEnv* Plugin::GetJavaEnv(int id)
+{
+	return this->jenvs[id - 1];
+}
+
 Plugin::Plugin()
 {
 	for (int i = 0; i < 30; i++) {
 		this->jvms[i] = nullptr;
 	}
+
 	LUA_DEFINE(CreateJava)
 	{
 		std::string classPath;
@@ -49,11 +61,63 @@ Plugin::Plugin()
 		int id = Plugin::Get()->CreateJava(classPath);
 		return Lua::ReturnValues(L, id);
 	});
+
 	LUA_DEFINE(DestroyJava)
 	{
 		int id;
 		Lua::ParseArguments(L, id);
 		Plugin::Get()->DestroyJava(id);
+		return 1;
+	});
+
+	LUA_DEFINE(CallJavaStaticMethod)
+	{
+		int id;
+		Lua::ParseArguments(L, id);
+		if (!Plugin::Get()->GetJavaEnv(id)) return 0;
+		JNIEnv* jenv = Plugin::Get()->GetJavaEnv(id);
+
+		Lua::LuaArgs_t arg_list;
+		Lua::ParseArguments(L, arg_list);
+
+		int arg_size = static_cast<int>(arg_list.size());
+		if (arg_size < 3) return 0;
+
+		std::string className = arg_list[1].GetValue<std::string>();
+		std::string methodName = arg_list[2].GetValue<std::string>();
+		std::string signature = "";
+
+		for (int i = 3; i < arg_size; i++) {
+			auto const& value = arg_list[i];
+
+			switch (value.GetType())
+			{
+				case Lua::LuaValue::Type::STRING:
+					signature = signature + "Ljava/lang/String;";
+					break;
+				case Lua::LuaValue::Type::NIL:
+				case Lua::LuaValue::Type::INVALID:
+					break;
+				default:
+					char buffer[50];
+					sprintf(buffer, "Unsupported parameter #%d in CallJavaStaticMethod.", i);
+
+					Onset::Plugin::Get()->Log(buffer);
+					break;
+			}
+		}
+
+		jclass clazz = jenv->FindClass(className.c_str());
+		if (clazz == nullptr) return 0;
+
+		char* sign = new char[signature.length() + 3];
+		sprintf(sign, "(%s)V", signature.c_str());
+
+		jmethodID methodID = jenv->GetStaticMethodID(clazz, methodName.c_str(), sign);
+		if (methodID == nullptr) return 0;
+
+		jenv->CallStaticVoidMethod(clazz, methodID);
+
 		return 1;
 	});
 }
