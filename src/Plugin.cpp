@@ -87,14 +87,25 @@ Plugin::Plugin()
 		std::string methodName = arg_list[2].GetValue<std::string>();
 		std::string signature = "";
 
+		jobject* params = new jobject[arg_size - 3];
 		for (int i = 3; i < arg_size; i++) {
 			auto const& value = arg_list[i];
 
 			switch (value.GetType())
 			{
 				case Lua::LuaValue::Type::STRING:
-					signature = signature + "Ljava/lang/String;";
-					break;
+					{
+						signature = signature + "Ljava/lang/String;";
+						params[i - 3] = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
+					} break;
+				case Lua::LuaValue::Type::INTEGER:
+					{
+						signature = signature + "Ljava/lang/Integer;";
+
+						jclass jcls = jenv->FindClass("java/lang/Integer");
+						jobject jobj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
+						params[i - 3] = jobj;
+					} break;
 				case Lua::LuaValue::Type::NIL:
 				case Lua::LuaValue::Type::INVALID:
 					break;
@@ -116,7 +127,41 @@ Plugin::Plugin()
 		jmethodID methodID = jenv->GetStaticMethodID(clazz, methodName.c_str(), sign);
 		if (methodID == nullptr) return 0;
 
-		jenv->CallStaticVoidMethod(clazz, methodID);
+		switch (arg_size - 3) {
+			case 0:
+				jenv->CallStaticVoidMethod(clazz, methodID);
+				break;
+			case 1:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 2:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1]);
+				break;
+			case 3:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 4:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 5:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 6:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 7:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 8:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 9:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 10:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+		}
 
 		return 1;
 	});
