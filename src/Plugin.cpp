@@ -74,6 +74,7 @@ Plugin::Plugin()
 	{
 		int id;
 		Lua::ParseArguments(L, id);
+
 		if (!Plugin::Get()->GetJavaEnv(id)) return 0;
 		JNIEnv* jenv = Plugin::Get()->GetJavaEnv(id);
 
@@ -81,10 +82,11 @@ Plugin::Plugin()
 		Lua::ParseArguments(L, arg_list);
 
 		int arg_size = static_cast<int>(arg_list.size());
-		if (arg_size < 3) return 0;
+		if (arg_size < 4) return 0;
 
 		std::string className = arg_list[1].GetValue<std::string>();
 		std::string methodName = arg_list[2].GetValue<std::string>();
+
 		std::string signature = arg_list[3].GetValue<std::string>();
 		size_t spos = signature.find(")");
 		std::string returnSignature = signature.substr(spos + 1, signature.length() - spos);
@@ -115,11 +117,13 @@ Plugin::Plugin()
 					break;
 			}
 		}
+
 		jclass clazz = jenv->FindClass(className.c_str());
 		if (clazz == nullptr) return 0;
 
 		jmethodID methodID = jenv->GetStaticMethodID(clazz, methodName.c_str(), signature.c_str());
 		if (methodID == nullptr) return 0;
+
 		jobject returnValue = nullptr;
 		switch (arg_size - 4) {
 			case 0:
@@ -156,10 +160,12 @@ Plugin::Plugin()
 				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
 				break;
 		}
+
 		if (returnValue != nullptr) {
 			if (returnSignature.compare("I")) {
 				Lua::ReturnValues(L, returnValue);
 			}
+
 			if (returnSignature.compare("Ljava.lang.String;")) {
 				const char* cstr = jenv->GetStringUTFChars((jstring)returnValue, NULL);
 				std::string str = std::string(cstr);
@@ -167,6 +173,7 @@ Plugin::Plugin()
 				Lua::ReturnValues(L, str);
 			}
 		}
+
 		return 1;
 	});
 }
