@@ -32,7 +32,7 @@ DestroyJava(jvmID)
 * **jvmID** ID to the JVM you have created using CreateJava.
 
 #### CallJavaStaticMethod
-Destroy a JVM.
+Call a java static method.
 ```lua
 CallJavaStaticMethod(jvmID, className, methodName, methodSignature, args...)
 ```
