@@ -159,6 +159,9 @@ Plugin::Plugin()
 			case 10:
 				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
 				break;
+			default:
+				Onset::Plugin::Get()->Log("Too many parameters for CallJavaStaticMethod, 10 max.");
+				break;
 		}
 
 		if (returnValue != nullptr) {
@@ -173,6 +176,8 @@ Plugin::Plugin()
 				Lua::ReturnValues(L, str);
 			}
 		}
+
+		delete params;
 
 		return 1;
 	});
