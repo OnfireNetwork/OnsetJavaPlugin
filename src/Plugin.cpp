@@ -85,26 +85,25 @@ Plugin::Plugin()
 
 		std::string className = arg_list[1].GetValue<std::string>();
 		std::string methodName = arg_list[2].GetValue<std::string>();
-		std::string signature = "";
+		std::string signature = arg_list[3].GetValue<std::string>();
+		size_t spos = signature.find(")");
+		std::string returnSignature = signature.substr(spos + 1, signature.length() - spos);
 
-		jobject* params = new jobject[arg_size - 3];
-		for (int i = 3; i < arg_size; i++) {
+		jobject* params = new jobject[arg_size - 4];
+		for (int i = 4; i < arg_size; i++) {
 			auto const& value = arg_list[i];
 
 			switch (value.GetType())
 			{
 				case Lua::LuaValue::Type::STRING:
 					{
-						signature = signature + "Ljava/lang/String;";
-						params[i - 3] = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
+						params[i - 4] = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
 					} break;
 				case Lua::LuaValue::Type::INTEGER:
 					{
-						signature = signature + "Ljava/lang/Integer;";
-
 						jclass jcls = jenv->FindClass("java/lang/Integer");
 						jobject jobj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
-						params[i - 3] = jobj;
+						params[i - 4] = jobj;
 					} break;
 				case Lua::LuaValue::Type::NIL:
 				case Lua::LuaValue::Type::INVALID:
@@ -112,57 +111,62 @@ Plugin::Plugin()
 				default:
 					char buffer[50];
 					sprintf(buffer, "Unsupported parameter #%d in CallJavaStaticMethod.", i);
-
 					Onset::Plugin::Get()->Log(buffer);
 					break;
 			}
 		}
-
 		jclass clazz = jenv->FindClass(className.c_str());
 		if (clazz == nullptr) return 0;
 
-		char* sign = new char[signature.length() + 3];
-		sprintf(sign, "(%s)V", signature.c_str());
-
-		jmethodID methodID = jenv->GetStaticMethodID(clazz, methodName.c_str(), sign);
+		jmethodID methodID = jenv->GetStaticMethodID(clazz, methodName.c_str(), signature.c_str());
 		if (methodID == nullptr) return 0;
-
-		switch (arg_size - 3) {
+		jobject returnValue = nullptr;
+		switch (arg_size - 4) {
 			case 0:
-				jenv->CallStaticVoidMethod(clazz, methodID);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID);
 				break;
 			case 1:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0]);
 				break;
 			case 2:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1]);
 				break;
 			case 3:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2]);
 				break;
 			case 4:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3]);
 				break;
 			case 5:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4]);
 				break;
 			case 6:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5]);
 				break;
 			case 7:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
 				break;
 			case 8:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]);
 				break;
 			case 9:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]);
 				break;
 			case 10:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				returnValue = jenv->CallStaticObjectMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
 				break;
 		}
-
+		if (returnValue != nullptr) {
+			if (returnSignature.compare("I")) {
+				Lua::ReturnValues(L, returnValue);
+			}
+			if (returnSignature.compare("Ljava.lang.String;")) {
+				const char* cstr = jenv->GetStringUTFChars((jstring)returnValue, NULL);
+				std::string str = std::string(cstr);
+				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
+				Lua::ReturnValues(L, str);
+			}
+		}
 		return 1;
 	});
 }
