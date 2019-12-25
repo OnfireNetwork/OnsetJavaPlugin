@@ -32,9 +32,9 @@ DestroyJava(jvmID)
 * **jvmID** ID to the JVM you have created using CreateJava.
 
 #### CallJavaStaticMethod
-Call a java static method.
+Call a java static method. Can return information from the Java method, check out Data Types for the types we currently support.
 ```lua
-CallJavaStaticMethod(jvmID, className, methodName, methodSignature, args...)
+local dataFromJava = CallJavaStaticMethod(jvmID, className, methodName, methodSignature, args...)
 ```
 * **jvmID** ID to the JVM you have created using CreateJava. Example: 1
 * **className** Class name of the class you want to call a method in, must include package path as well. Example: dev/joseph/Test (dev.joseph.Test).
