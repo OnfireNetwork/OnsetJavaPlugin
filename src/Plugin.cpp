@@ -86,10 +86,7 @@ Plugin::Plugin()
 
 		std::string className = arg_list[1].GetValue<std::string>();
 		std::string methodName = arg_list[2].GetValue<std::string>();
-
 		std::string signature = arg_list[3].GetValue<std::string>();
-		size_t spos = signature.find(")");
-		std::string returnSignature = signature.substr(spos + 1, signature.length() - spos);
 
 		jobject* params = new jobject[arg_size - 4];
 		for (int i = 4; i < arg_size; i++) {
@@ -165,14 +162,19 @@ Plugin::Plugin()
 		}
 
 		if (returnValue != nullptr) {
-			if (returnSignature.compare("I")) {
-				Lua::ReturnValues(L, returnValue);
+			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Integer"))) {
+				jclass cls = jenv->GetObjectClass(returnValue);
+				jmethodID intValue = jenv->GetMethodID(cls, "intValue", "()I");
+				jint result = jenv->CallIntMethod(returnValue, intValue);
+
+				Lua::ReturnValues(L, result);
 			}
 
-			if (returnSignature.compare("Ljava.lang.String;")) {
+			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/String"))) {
 				const char* cstr = jenv->GetStringUTFChars((jstring)returnValue, NULL);
 				std::string str = std::string(cstr);
 				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
+
 				Lua::ReturnValues(L, str);
 			}
 		}
