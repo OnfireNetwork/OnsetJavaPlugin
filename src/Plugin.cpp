@@ -18,15 +18,18 @@ int Plugin::CreateJava(std::string classPath)
 
 	static std::stringstream optionString;
 	optionString << "-Djava.class.path=" << classPath;
+
 	JavaVMInitArgs vm_args;
 	auto* options = new JavaVMOption[1];
 	char cpoptionString[200] = "";
 	strcpy(cpoptionString, optionString.str().c_str());
+	
 	options[0].optionString = cpoptionString;
 	vm_args.version = JNI_VERSION_1_8;
 	vm_args.nOptions = 1;
 	vm_args.options = options;
 	vm_args.ignoreUnrecognized = false;
+	
 	JNI_CreateJavaVM(&this->jvms[id], (void**)&this->jenvs[id], &vm_args);
 	return id + 1;
 }
@@ -50,10 +53,6 @@ JNIEnv* Plugin::GetJavaEnv(int id)
 
 Plugin::Plugin()
 {
-	for (int i = 0; i < 30; i++) {
-		this->jvms[i] = nullptr;
-	}
-
 	LUA_DEFINE(CreateJava)
 	{
 		std::string classPath;
@@ -162,10 +161,11 @@ Plugin::Plugin()
 		}
 
 		if (returnValue != nullptr) {
+			jclass cls = jenv->GetObjectClass(returnValue);
+
 			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Integer"))) {
-				jclass cls = jenv->GetObjectClass(returnValue);
-				jmethodID intValue = jenv->GetMethodID(cls, "intValue", "()I");
-				jint result = jenv->CallIntMethod(returnValue, intValue);
+				jmethodID intValueMethod = jenv->GetMethodID(cls, "intValue", "()I");
+				jint result = jenv->CallIntMethod(returnValue, intValueMethod);
 
 				Lua::ReturnValues(L, result);
 			}
@@ -176,6 +176,34 @@ Plugin::Plugin()
 				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
 
 				Lua::ReturnValues(L, str);
+			}
+
+			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/List")) || jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/ArrayList"))) {
+				jmethodID sizeMethod = jenv->GetMethodID(cls, "size", "()I");
+				jmethodID getMethod = jenv->GetMethodID(cls, "get", "(I)Ljava/lang/Object;");
+				jint len = jenv->CallIntMethod(returnValue, sizeMethod);
+
+				Lua::LuaTable_t table(new Lua::LuaTable);
+				
+				for (jint i = 0; i < len; i++) {
+					jobject arrayElement = jenv->CallObjectMethod(returnValue, getMethod, i);
+
+					if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/String"))) {
+						jstring element = (jstring)arrayElement;
+						const char* pchars = jenv->GetStringUTFChars(element, nullptr);
+
+						table->Add(i + 1, pchars);
+						jenv->ReleaseStringUTFChars(element, pchars);
+						jenv->DeleteLocalRef(element);
+					} else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Integer"))) {
+						jmethodID intValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "intValue", "()I");
+						jint result = jenv->CallIntMethod(arrayElement, intValueMethod);
+
+						table->Add(i + 1, result);
+					}
+				}
+
+				Lua::ReturnValues(L, table);
 			}
 		}
 
