@@ -13,6 +13,7 @@ Authors: JanHolger, Digital
 #### Return Values
 * String (java.lang.String)
 * Integer (java.lang.Integer)
+* ArrayList, List (java.util.ArrayList, java.util.List) with types String and Integer.
 
 We will be adding more data types later on.
 
