@@ -127,10 +127,31 @@ Lua::LuaValue Plugin::ToLuaValue(JNIEnv* jenv, jobject object)
 		jint len = jenv->CallIntMethod(object, sizeMethod);
 
 		Lua::LuaTable_t table(new Lua::LuaTable);
-
 		for (jint i = 0; i < len; i++) {
 			jobject arrayElement = jenv->CallObjectMethod(object, getMethod, i);
 			table->Add(i + 1, Plugin::Get()->ToLuaValue(jenv, arrayElement));
+		}
+
+		Lua::LuaValue value(table);
+		return value;
+	}
+	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/util/Map"))) {
+		jmethodID getMethod = jenv->GetMethodID(jcls, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+
+		jmethodID keySetMethod = jenv->GetMethodID(jcls, "keySet", "()Ljava/util/Set;");
+		jobject keySet = jenv->CallObjectMethod(object, keySetMethod);
+
+		jmethodID keySetToArrayMethod = jenv->GetMethodID(jenv->GetObjectClass(keySet), "toArray", "()[Ljava/lang/Object;");
+		jobjectArray keyArray = (jobjectArray)jenv->CallObjectMethod(keySet, keySetToArrayMethod);
+		int arraySize = jenv->GetArrayLength(keyArray);
+
+		Lua::LuaTable_t table(new Lua::LuaTable);
+		for (int i = 0; i < arraySize; i++)
+		{
+			jobject key = jenv->GetObjectArrayElement(keyArray, i);
+			jobject value = jenv->CallObjectMethod(object, getMethod, key);
+
+			table->Add(Plugin::Get()->ToLuaValue(jenv, key), Plugin::Get()->ToLuaValue(jenv, value));
 		}
 
 		Lua::LuaValue value(table);
