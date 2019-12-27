@@ -51,6 +51,95 @@ JNIEnv* Plugin::GetJavaEnv(int id)
 	return this->jenvs[id - 1];
 }
 
+jobject Plugin::ToJavaObject(JNIEnv* jenv, Lua::LuaValue value)
+{
+	switch (value.GetType())
+	{
+		case Lua::LuaValue::Type::STRING:
+			{
+				return (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
+			} break;
+		case Lua::LuaValue::Type::INTEGER:
+			{
+				jclass jcls = jenv->FindClass("java/lang/Integer");
+				return jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
+			} break;
+		case Lua::LuaValue::Type::BOOLEAN:
+			{
+				jclass jcls = jenv->FindClass("java/lang/Boolean");
+				return jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(Z)V"), value.GetValue<bool>());
+			} break;
+		case Lua::LuaValue::Type::TABLE:
+			{
+				jclass jcls = jenv->FindClass("java/util/HashMap");
+				jobject jmap = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "()V"));
+				jmethodID putMethod = jenv->GetMethodID(jcls, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+				Lua::LuaTable_t table = value.GetValue<Lua::LuaTable_t>();
+				table->ForEach([jenv, jmap, putMethod](Lua::LuaValue k, Lua::LuaValue v) {
+					jenv->CallObjectMethod(jmap, putMethod, Plugin::Get()->ToJavaObject(jenv, k), Plugin::Get()->ToJavaObject(jenv, v));
+				});
+
+				return jmap;
+			} break;
+		case Lua::LuaValue::Type::NIL:
+		case Lua::LuaValue::Type::INVALID:
+			break;
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+Lua::LuaValue Plugin::ToLuaValue(JNIEnv* jenv, jobject object)
+{
+	jclass jcls = jenv->GetObjectClass(object);
+
+	if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/String"))) {
+		jstring element = (jstring)object;
+		const char* pchars = jenv->GetStringUTFChars(element, nullptr);
+
+		Lua::LuaValue value(pchars);
+
+		jenv->ReleaseStringUTFChars(element, pchars);
+		jenv->DeleteLocalRef(element);
+
+		return value;
+	}
+	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Integer"))) {
+		jmethodID intValueMethod = jenv->GetMethodID(jcls, "intValue", "()I");
+		jint result = jenv->CallIntMethod(object, intValueMethod);
+
+		Lua::LuaValue value(result);
+		return value;
+	}
+	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Boolean"))) {
+		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
+		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
+
+		Lua::LuaValue value(result);
+		return value;
+	}
+	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/util/List"))) {
+		jmethodID sizeMethod = jenv->GetMethodID(jcls, "size", "()I");
+		jmethodID getMethod = jenv->GetMethodID(jcls, "get", "(I)Ljava/lang/Object;");
+		jint len = jenv->CallIntMethod(object, sizeMethod);
+
+		Lua::LuaTable_t table(new Lua::LuaTable);
+
+		for (jint i = 0; i < len; i++) {
+			jobject arrayElement = jenv->CallObjectMethod(object, getMethod, i);
+			table->Add(i + 1, Plugin::Get()->ToLuaValue(jenv, arrayElement));
+		}
+
+		Lua::LuaValue value(table);
+		return value;
+	}
+
+	return NULL;
+}
+
 void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 	(void) jcl;
 
@@ -65,35 +154,8 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 
 		for (jint i = 0; i < len; i++) {
 			jobject arrayElement = jenv->CallObjectMethod(argsList, getMethod, i);
-
-			if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/String"))) {
-				jstring element = (jstring)arrayElement;
-				const char* pchars = jenv->GetStringUTFChars(element, nullptr);
-				
-				args->push_back(pchars);
-				jenv->ReleaseStringUTFChars(element, pchars);
-				jenv->DeleteLocalRef(element);
-			}
-			else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Integer"))) {
-				jmethodID intValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "intValue", "()I");
-				jint result = jenv->CallIntMethod(arrayElement, intValueMethod);
-
-				args->push_back(result);
-			}
-			else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Boolean"))) {
-				jmethodID boolValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "booleanValue", "()Z");
-				jboolean result = jenv->CallBooleanMethod(arrayElement, boolValueMethod);
-
-				args->push_back(result);
-			}
+			args->push_back(Plugin::Get()->ToLuaValue(jenv, arrayElement));
 		}
-	} else if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/lang/String"))) {
-		jstring element = (jstring)argsList;
-		const char* pchars = jenv->GetStringUTFChars(element, nullptr);
-		args->push_back(pchars);
-
-		jenv->ReleaseStringUTFChars(element, pchars);
-		jenv->DeleteLocalRef(element);
 	}
 
 	Onset::Plugin::Get()->CallEvent(eventStr, args);
@@ -169,28 +231,7 @@ Plugin::Plugin()
 		jobject* params = new jobject[arg_size - 4];
 		for (int i = 4; i < arg_size; i++) {
 			auto const& value = arg_list[i];
-
-			switch (value.GetType())
-			{
-				case Lua::LuaValue::Type::STRING:
-					{
-						params[i - 4] = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
-					} break;
-				case Lua::LuaValue::Type::INTEGER:
-					{
-						jclass jcls = jenv->FindClass("java/lang/Integer");
-						jobject jobj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
-						params[i - 4] = jobj;
-					} break;
-				case Lua::LuaValue::Type::NIL:
-				case Lua::LuaValue::Type::INVALID:
-					break;
-				default:
-					char buffer[50];
-					sprintf(buffer, "Unsupported parameter #%d in CallJavaStaticMethod.", i);
-					Onset::Plugin::Get()->Log(buffer);
-					break;
-			}
+			params[i - 4] = Plugin::Get()->ToJavaObject(jenv, value);
 		}
 
 		jclass clazz = jenv->FindClass(className.c_str());
@@ -239,67 +280,31 @@ Plugin::Plugin()
 				break;
 		}
 
-		bool handled = false;
 		if (returnValue != nullptr) {
-			jclass cls = jenv->GetObjectClass(returnValue);
+			Lua::LuaValue value = Plugin::Get()->ToLuaValue(jenv, returnValue);
 
-			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/String"))) {
-				const char* cstr = jenv->GetStringUTFChars((jstring)returnValue, NULL);
-				std::string str = std::string(cstr);
-				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
-
-				Lua::ReturnValues(L, str);
-				handled = true;
-			} else if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Integer"))) {
-				jmethodID intValueMethod = jenv->GetMethodID(cls, "intValue", "()I");
-				jint result = jenv->CallIntMethod(returnValue, intValueMethod);
-
-				Lua::ReturnValues(L, result);
-				handled = true;
-			} else if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Boolean"))) {
-				jmethodID boolValueMethod = jenv->GetMethodID(cls, "booleanValue", "()Z");
-				jboolean result = jenv->CallBooleanMethod(returnValue, boolValueMethod);
-
-				Lua::ReturnValues(L, result);
-				handled = true;
-			}
-
-			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/List")) || jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/ArrayList"))) {
-				jmethodID sizeMethod = jenv->GetMethodID(cls, "size", "()I");
-				jmethodID getMethod = jenv->GetMethodID(cls, "get", "(I)Ljava/lang/Object;");
-				jint len = jenv->CallIntMethod(returnValue, sizeMethod);
-
-				Lua::LuaTable_t table(new Lua::LuaTable);
-				
-				for (jint i = 0; i < len; i++) {
-					jobject arrayElement = jenv->CallObjectMethod(returnValue, getMethod, i);
-
-					if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/String"))) {
-						jstring element = (jstring)arrayElement;
-						const char* pchars = jenv->GetStringUTFChars(element, nullptr);
-
-						table->Add(i + 1, pchars);
-						jenv->ReleaseStringUTFChars(element, pchars);
-						jenv->DeleteLocalRef(element);
-					} else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Integer"))) {
-						jmethodID intValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "intValue", "()I");
-						jint result = jenv->CallIntMethod(arrayElement, intValueMethod);
-
-						table->Add(i + 1, result);
-					} else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Boolean"))) {
-						jmethodID boolValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "booleanValue", "()Z");
-						jboolean result = jenv->CallBooleanMethod(arrayElement, boolValueMethod);
-
-						table->Add(i + 1, result);
-					}
+			if (!(value == NULL)) {
+				switch (value.GetType())
+				{
+					case Lua::LuaValue::Type::STRING:
+						Lua::ReturnValues(L, value.GetValue<std::string>().c_str());
+						break;
+					case Lua::LuaValue::Type::INTEGER:
+						Lua::ReturnValues(L, value.GetValue<int>());
+						break;
+					case Lua::LuaValue::Type::BOOLEAN:
+						Lua::ReturnValues(L, value.GetValue<bool>());
+						break;
+					case Lua::LuaValue::Type::TABLE:
+						Lua::ReturnValues(L, value.GetValue<Lua::LuaTable_t>());
+						break;
 				}
-
-				Lua::ReturnValues(L, table);
-				handled = true;
 			}
 		}
+		else {
+			Lua::ReturnValues(L, 1);
+		}
 
-		if (!handled) Lua::ReturnValues(L, 1);
 		return 1;
 	});
 }

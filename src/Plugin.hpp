@@ -35,4 +35,7 @@ public:
 	void DestroyJava(int id);
 	JavaVM* GetJavaVM(int id);
 	JNIEnv* GetJavaEnv(int id);
+
+	jobject ToJavaObject(JNIEnv* jenv, Lua::LuaValue value);
+	Lua::LuaValue ToLuaValue(JNIEnv* jenv, jobject object);
 };
