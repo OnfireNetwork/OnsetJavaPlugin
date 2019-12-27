@@ -43,4 +43,23 @@ local dataFromJava = CallJavaStaticMethod(jvmID, className, methodName, methodSi
 * **methodSignature** Signature of the method you want to call. Example: (Ljava/lang/Integer;)I
 * **args (Optional)** Pass arguments into the method.
 
+#### LinkJavaAdapter
+Links a Java class so the native methods below can be used.
+```lua
+LinkJavaAdapter(jvmID, className)
+```
+* **jvmID** ID to the JVM you have created using CreateJava. Example: 1
+* **className** Class name of the class you want to call a method in, must include package path as well. Example: dev/joseph/Adapter (dev.joseph.Adapter).
 
+### Java Native Methods
+#### callEvent
+Call Lua events from Java.
+```java
+public class Adapter {
+    public native static void callEvent(String event, List<String> args);
+}
+```
+Example:
+```java
+Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "ye"));
+```
