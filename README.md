@@ -8,6 +8,16 @@ Authors: JanHolger, Digital
 ### Download
 Check out Releases for a download to Windows & Linux builds.
 
+### Issues
+If you have the following error in console while loading our Java plugin,
+```
+[2019-12-27 20:01:37] [info] Loading plugin "OnsetJavaPlugin"
+[2019-12-27 20:01:37] [error] Failed loading "OnsetJavaPlugin": The specified module could not be found.
+```
+This is typically an issue with Windows users. To fix this, add your Java 8 bin/server folder to your PATH configuration. Example of JDK (or JRE) path:
+```C:\Program Files\Java\jdk1.8.0_221\jre\bin\server```
+Make sure your Java installation is 64 bit otherwise it won't have the required JNI libraries we use.
+
 ### Data Types we support
 #### Method Parameters
 * Lua String -> String (java.lang.String)
