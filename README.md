@@ -69,3 +69,9 @@ Example:
 Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "yeah"));
 Adapter.callEvent("testCallEvent", Arrays.asList(1, 2, "hi", 384, "yeeep"));
 ```
+```lua
+function testCallEvent(arg1)
+  print ('first arg is ' .. arg1)
+end
+AddEvent('testCallEvent', testCallEvent)
+```
