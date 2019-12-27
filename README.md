@@ -64,12 +64,12 @@ public class Adapter {
 ##### Data Types
 * String (java.lang.String)
 * Integer (java.lang.Integer)
-* Integer (java.lang.Boolean)
+* Boolean (java.lang.Boolean)
 
 Example:
 ```java
 Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "yeah"));
-Adapter.callEvent("testCallEvent", Arrays.asList(1, 2, "hi", 384, "yeeep"));
+Adapter.callEvent("testCallEvent", Arrays.asList(1, 2, "hi", 384, "yeeep", true, false));
 ```
 ```lua
 function testCallEvent(arg1)
