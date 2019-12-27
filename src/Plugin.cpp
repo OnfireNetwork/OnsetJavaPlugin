@@ -74,6 +74,12 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 				jenv->ReleaseStringUTFChars(element, pchars);
 				jenv->DeleteLocalRef(element);
 			}
+			else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Integer"))) {
+				jmethodID intValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "intValue", "()I");
+				jint result = jenv->CallIntMethod(arrayElement, intValueMethod);
+
+				args->push_back(result);
+			}
 		}
 	} else if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/lang/String"))) {
 		jstring element = (jstring)argsList;
