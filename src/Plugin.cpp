@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iostream>
+#include <cstring>
 #include <string>
 
 #include "Plugin.hpp"
@@ -22,7 +23,7 @@ int Plugin::CreateJava(std::string classPath)
 	JavaVMInitArgs vm_args;
 	auto* options = new JavaVMOption[1];
 	char cpoptionString[200] = "";
-	strcpy(cpoptionString, optionString.str().c_str());
+	std::strcpy(cpoptionString, optionString.str().c_str());
 	
 	options[0].optionString = cpoptionString;
 	vm_args.version = JNI_VERSION_1_8;
@@ -318,6 +319,8 @@ Plugin::Plugin()
 						break;
 					case Lua::LuaValue::Type::TABLE:
 						Lua::ReturnValues(L, value.GetValue<Lua::LuaTable_t>());
+						break;
+					default:
 						break;
 				}
 			}
