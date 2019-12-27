@@ -54,15 +54,14 @@ JNIEnv* Plugin::GetJavaEnv(int id)
 void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 	(void) jcl;
 
+	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
+	auto args = new Lua::LuaArgs_t();
+
 	if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/util/List"))) {
-		const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
-		
 		jclass argsCls = jenv->GetObjectClass(argsList);
 		jmethodID sizeMethod = jenv->GetMethodID(argsCls, "size", "()I");
 		jmethodID getMethod = jenv->GetMethodID(argsCls, "get", "(I)Ljava/lang/Object;");
 		jint len = jenv->CallIntMethod(argsList, sizeMethod);
-
-		auto args = new Lua::LuaArgs_t();
 
 		for (jint i = 0; i < len; i++) {
 			jobject arrayElement = jenv->CallObjectMethod(argsList, getMethod, i);
@@ -76,12 +75,19 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 				jenv->DeleteLocalRef(element);
 			}
 		}
+	} else if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/lang/String"))) {
+		jstring element = (jstring)argsList;
+		const char* pchars = jenv->GetStringUTFChars(element, nullptr);
+		args->push_back(pchars);
 
-		Onset::Plugin::Get()->CallEvent(eventStr, args);
-
-		jenv->ReleaseStringUTFChars(event, eventStr);
-		jenv->DeleteLocalRef(event);
+		jenv->ReleaseStringUTFChars(element, pchars);
+		jenv->DeleteLocalRef(element);
 	}
+
+	Onset::Plugin::Get()->CallEvent(eventStr, args);
+
+	jenv->ReleaseStringUTFChars(event, eventStr);
+	jenv->DeleteLocalRef(event);
 }
 
 Plugin::Plugin()
