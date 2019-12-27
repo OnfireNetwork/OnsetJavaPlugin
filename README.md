@@ -56,10 +56,16 @@ LinkJavaAdapter(jvmID, className)
 Call Lua events from Java.
 ```java
 public class Adapter {
-    public native static void callEvent(String event, List<String> args);
+    public native static void callEvent(String event, List<Object> args);
 }
 ```
+
+##### Data Types
+* String (java.lang.String)
+* Integer (java.lang.Integer)
+
 Example:
 ```java
-Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "ye"));
+Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "yeah"));
+Adapter.callEvent("testCallEvent", Arrays.asList(1, 2, "hi", 384, "yeeep"));
 ```
