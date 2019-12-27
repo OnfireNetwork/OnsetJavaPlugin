@@ -80,6 +80,12 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 
 				args->push_back(result);
 			}
+			else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Boolean"))) {
+				jmethodID boolValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "booleanValue", "()Z");
+				jboolean result = jenv->CallBooleanMethod(arrayElement, boolValueMethod);
+
+				args->push_back(result);
+			}
 		}
 	} else if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/lang/String"))) {
 		jstring element = (jstring)argsList;
@@ -237,20 +243,24 @@ Plugin::Plugin()
 		if (returnValue != nullptr) {
 			jclass cls = jenv->GetObjectClass(returnValue);
 
-			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Integer"))) {
-				jmethodID intValueMethod = jenv->GetMethodID(cls, "intValue", "()I");
-				jint result = jenv->CallIntMethod(returnValue, intValueMethod);
-
-				Lua::ReturnValues(L, result);
-				handled = true;
-			}
-
 			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/String"))) {
 				const char* cstr = jenv->GetStringUTFChars((jstring)returnValue, NULL);
 				std::string str = std::string(cstr);
 				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
 
 				Lua::ReturnValues(L, str);
+				handled = true;
+			} else if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Integer"))) {
+				jmethodID intValueMethod = jenv->GetMethodID(cls, "intValue", "()I");
+				jint result = jenv->CallIntMethod(returnValue, intValueMethod);
+
+				Lua::ReturnValues(L, result);
+				handled = true;
+			} else if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/Boolean"))) {
+				jmethodID boolValueMethod = jenv->GetMethodID(cls, "booleanValue", "()Z");
+				jboolean result = jenv->CallBooleanMethod(returnValue, boolValueMethod);
+
+				Lua::ReturnValues(L, result);
 				handled = true;
 			}
 
@@ -274,6 +284,11 @@ Plugin::Plugin()
 					} else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Integer"))) {
 						jmethodID intValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "intValue", "()I");
 						jint result = jenv->CallIntMethod(arrayElement, intValueMethod);
+
+						table->Add(i + 1, result);
+					} else if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/Boolean"))) {
+						jmethodID boolValueMethod = jenv->GetMethodID(jenv->GetObjectClass(arrayElement), "booleanValue", "()Z");
+						jboolean result = jenv->CallBooleanMethod(arrayElement, boolValueMethod);
 
 						table->Add(i + 1, result);
 					}
