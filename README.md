@@ -5,6 +5,9 @@ Authors: JanHolger, Digital
 * Create JVMs.
 * Communicate from Lua <-> Java.
 
+### Download
+Check out Releases for a download to Windows & Linux builds.
+
 ### Data Types we support
 #### Method Parameters
 * Lua String -> String (java.lang.String)
