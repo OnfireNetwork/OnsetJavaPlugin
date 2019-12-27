@@ -51,6 +51,39 @@ JNIEnv* Plugin::GetJavaEnv(int id)
 	return this->jenvs[id - 1];
 }
 
+void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
+	(void) jcl;
+
+	if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/util/List"))) {
+		const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
+		
+		jclass argsCls = jenv->GetObjectClass(argsList);
+		jmethodID sizeMethod = jenv->GetMethodID(argsCls, "size", "()I");
+		jmethodID getMethod = jenv->GetMethodID(argsCls, "get", "(I)Ljava/lang/Object;");
+		jint len = jenv->CallIntMethod(argsList, sizeMethod);
+
+		auto args = new Lua::LuaArgs_t();
+
+		for (jint i = 0; i < len; i++) {
+			jobject arrayElement = jenv->CallObjectMethod(argsList, getMethod, i);
+
+			if (jenv->IsInstanceOf(arrayElement, jenv->FindClass("java/lang/String"))) {
+				jstring element = (jstring)arrayElement;
+				const char* pchars = jenv->GetStringUTFChars(element, nullptr);
+				
+				args->push_back(pchars);
+				jenv->ReleaseStringUTFChars(element, pchars);
+				jenv->DeleteLocalRef(element);
+			}
+		}
+
+		Onset::Plugin::Get()->CallEvent(eventStr, args);
+
+		jenv->ReleaseStringUTFChars(event, eventStr);
+		jenv->DeleteLocalRef(event);
+	}
+}
+
 Plugin::Plugin()
 {
 	LUA_DEFINE(CreateJava)
@@ -66,6 +99,34 @@ Plugin::Plugin()
 		int id;
 		Lua::ParseArguments(L, id);
 		Plugin::Get()->DestroyJava(id);
+		return 1;
+	});
+
+	LUA_DEFINE(LinkJavaAdapter)
+	{
+		int id;
+		Lua::ParseArguments(L, id);
+
+		if (!Plugin::Get()->GetJavaEnv(id)) return 0;
+		JNIEnv* jenv = Plugin::Get()->GetJavaEnv(id);
+
+		Lua::LuaArgs_t arg_list;
+		Lua::ParseArguments(L, arg_list);
+
+		int arg_size = static_cast<int>(arg_list.size());
+		if (arg_size < 2) return 0;
+
+		std::string className = arg_list[1].GetValue<std::string>();
+		jclass clazz = jenv->FindClass(className.c_str());
+		if (clazz == nullptr) return 0;
+
+		JNINativeMethod methods[] = {
+			{(char*)"callEvent", (char*)"(Ljava/lang/String;Ljava/util/List;)V", (void*)CallEvent },
+		};
+
+		jenv->RegisterNatives(clazz, methods, 1);
+
+		Lua::ReturnValues(L, 1);
 		return 1;
 	});
 
@@ -160,6 +221,7 @@ Plugin::Plugin()
 				break;
 		}
 
+		bool handled = false;
 		if (returnValue != nullptr) {
 			jclass cls = jenv->GetObjectClass(returnValue);
 
@@ -168,6 +230,7 @@ Plugin::Plugin()
 				jint result = jenv->CallIntMethod(returnValue, intValueMethod);
 
 				Lua::ReturnValues(L, result);
+				handled = true;
 			}
 
 			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/lang/String"))) {
@@ -176,6 +239,7 @@ Plugin::Plugin()
 				jenv->ReleaseStringUTFChars((jstring)returnValue, cstr);
 
 				Lua::ReturnValues(L, str);
+				handled = true;
 			}
 
 			if (jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/List")) || jenv->IsInstanceOf(returnValue, jenv->FindClass("java/util/ArrayList"))) {
@@ -204,11 +268,11 @@ Plugin::Plugin()
 				}
 
 				Lua::ReturnValues(L, table);
+				handled = true;
 			}
 		}
 
-		delete params;
-
+		if (!handled) Lua::ReturnValues(L, 1);
 		return 1;
 	});
 }

@@ -35,5 +35,4 @@ public:
 	void DestroyJava(int id);
 	JavaVM* GetJavaVM(int id);
 	JNIEnv* GetJavaEnv(int id);
-
 };
