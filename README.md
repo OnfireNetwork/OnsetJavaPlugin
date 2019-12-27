@@ -7,13 +7,14 @@ Authors: JanHolger, Digital
 
 ### Data Types we support
 #### Method Parameters
-* String (java.lang.String)
-* Integer (java.lang.Integer)
+* Lua String -> String (java.lang.String)
+* Lua Int -> Integer (java.lang.Integer)
 
 #### Return Values
 * String (java.lang.String)
 * Integer (java.lang.Integer)
-* ArrayList, List (java.util.ArrayList, java.util.List) with types String and Integer.
+* Boolean (java.lang.Boolean)
+* ArrayList, List (java.util.ArrayList, java.util.List) with types String, Integer, Boolean.
 
 We will be adding more data types later on.
 
@@ -63,6 +64,7 @@ public class Adapter {
 ##### Data Types
 * String (java.lang.String)
 * Integer (java.lang.Integer)
+* Integer (java.lang.Boolean)
 
 Example:
 ```java
