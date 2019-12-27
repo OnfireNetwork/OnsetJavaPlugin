@@ -9,12 +9,15 @@ Authors: JanHolger, Digital
 #### Method Parameters
 * Lua String -> String (java.lang.String)
 * Lua Int -> Integer (java.lang.Integer)
+* Lua Bool -> Boolean (java.lang.Boolean)
+* Lua Table -> Map (java.util.HashMap)
 
 #### Return Values
 * String (java.lang.String)
 * Integer (java.lang.Integer)
 * Boolean (java.lang.Boolean)
-* ArrayList, List (java.util.ArrayList, java.util.List) with types String, Integer, Boolean.
+* List (java.util.List)
+* Map (java.util.Map)
 
 We will be adding more data types later on.
 
@@ -60,12 +63,6 @@ public class Adapter {
     public native static void callEvent(String event, List<Object> args);
 }
 ```
-
-##### Data Types
-* String (java.lang.String)
-* Integer (java.lang.Integer)
-* Boolean (java.lang.Boolean)
-
 Example:
 ```java
 Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "yeah"));
