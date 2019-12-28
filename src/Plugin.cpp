@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <windows.h>
 
 #include "Plugin.hpp"
 
@@ -10,12 +11,28 @@
 #endif
 #define LUA_DEFINE(name) Define(#name, [](lua_State *L) -> int
 
+typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
+
 int Plugin::CreateJava(std::string classPath)
 {
 	int id = 0;
 	while (this->jvms[id] != nullptr){
 		id++;
 	}
+
+	#ifdef _WIN32
+		HINSTANCE jvmDLL = LoadLibrary(".\\jre\\bin\\server\\jvm.dll");
+		if (!jvmDLL) {
+			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
+			return 1;
+		}
+
+		JVMDLLFunction createJavaVMFunction = (JVMDLLFunction)GetProcAddress(jvmDLL, "JNI_CreateJavaVM");
+		if (!createJavaVMFunction) {
+			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
+			return 1;
+		}
+	#endif
 
 	static std::stringstream optionString;
 	optionString << "-Djava.class.path=" << classPath;
@@ -30,8 +47,13 @@ int Plugin::CreateJava(std::string classPath)
 	vm_args.nOptions = 1;
 	vm_args.options = options;
 	vm_args.ignoreUnrecognized = false;
-	
-	JNI_CreateJavaVM(&this->jvms[id], (void**)&this->jenvs[id], &vm_args);
+
+	#ifdef __linux__ 
+		JNI_CreateJavaVM(&this->jvms[id], (void**)&this->jenvs[id], &vm_args);
+	#elif _WIN32
+		createJavaVMFunction(&this->jvms[id], (void**)&this->jenvs[id], &vm_args);
+	#endif
+
 	return id + 1;
 }
 
