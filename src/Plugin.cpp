@@ -188,6 +188,9 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 
 Plugin::Plugin()
 {
+	for (int i = 0; i < 30; i++)
+		this->jvms[i] = nullptr;
+
 	LUA_DEFINE(CreateJava)
 	{
 		std::string classPath;
@@ -248,7 +251,10 @@ Plugin::Plugin()
 
 		std::string className = arg_list[1].GetValue<std::string>();
 		std::string methodName = arg_list[2].GetValue<std::string>();
+
 		std::string signature = arg_list[3].GetValue<std::string>();
+		size_t spos = signature.find(")");
+		std::string returnSignature = signature.substr(spos + 1, signature.length() - spos);
 
 		jobject* params = new jobject[arg_size - 4];
 		for (int i = 4; i < arg_size; i++) {
@@ -263,7 +269,49 @@ Plugin::Plugin()
 		if (methodID == nullptr) return 0;
 
 		jobject returnValue = nullptr;
-		switch (arg_size - 4) {
+
+		if (returnSignature.compare("V")) {
+			switch (arg_size - 4) {
+			case 0:
+				jenv->CallStaticVoidMethod(clazz, methodID);
+				break;
+			case 1:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+				break;
+			case 2:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1]);
+				break;
+			case 3:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2]);
+				break;
+			case 4:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3]);
+				break;
+			case 5:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4]);
+				break;
+			case 6:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5]);
+				break;
+			case 7:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+				break;
+			case 8:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]);
+				break;
+			case 9:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]);
+				break;
+			case 10:
+				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
+				break;
+			default:
+				Onset::Plugin::Get()->Log("Too many parameters for CallJavaStaticMethod, 10 max.");
+				break;
+			}
+		}
+		else {
+			switch (arg_size - 4) {
 			case 0:
 				returnValue = jenv->CallStaticObjectMethod(clazz, methodID);
 				break;
@@ -300,6 +348,7 @@ Plugin::Plugin()
 			default:
 				Onset::Plugin::Get()->Log("Too many parameters for CallJavaStaticMethod, 10 max.");
 				break;
+			}
 		}
 
 		if (returnValue != nullptr) {
