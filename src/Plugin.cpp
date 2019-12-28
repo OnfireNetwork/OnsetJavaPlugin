@@ -269,45 +269,44 @@ Plugin::Plugin()
 		if (methodID == nullptr) return 0;
 
 		jobject returnValue = nullptr;
-
-		if (returnSignature.compare("V")) {
+		if (!returnSignature.compare("V")) {
 			switch (arg_size - 4) {
-			case 0:
-				jenv->CallStaticVoidMethod(clazz, methodID);
-				break;
-			case 1:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
-				break;
-			case 2:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1]);
-				break;
-			case 3:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2]);
-				break;
-			case 4:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3]);
-				break;
-			case 5:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4]);
-				break;
-			case 6:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5]);
-				break;
-			case 7:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
-				break;
-			case 8:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]);
-				break;
-			case 9:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]);
-				break;
-			case 10:
-				jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
-				break;
-			default:
-				Onset::Plugin::Get()->Log("Too many parameters for CallJavaStaticMethod, 10 max.");
-				break;
+				case 0:
+					jenv->CallStaticVoidMethod(clazz, methodID);
+					break;
+				case 1:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0]);
+					break;
+				case 2:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1]);
+					break;
+				case 3:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2]);
+					break;
+				case 4:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3]);
+					break;
+				case 5:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4]);
+					break;
+				case 6:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5]);
+					break;
+				case 7:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+					break;
+				case 8:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]);
+					break;
+				case 9:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]);
+					break;
+				case 10:
+					jenv->CallStaticVoidMethod(clazz, methodID, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
+					break;
+				default:
+					Onset::Plugin::Get()->Log("Too many parameters for CallJavaStaticMethod, 10 max.");
+					break;
 			}
 		}
 		else {
