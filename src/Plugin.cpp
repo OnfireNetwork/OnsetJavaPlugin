@@ -21,29 +21,37 @@
 int Plugin::CreateJava(std::string classPath)
 {
 	int id = 0;
-	while (this->jvms[id] != nullptr){
+	while (this->jvms[id] != nullptr)
 		id++;
-	}
 
 	#ifdef _WIN32
-		char inputPathDll[] = "%JAVA_HOME%\\jre\\bin\\server\\jvm.dll";
-		TCHAR outputPathDll[32000];
-		DWORD result = ExpandEnvironmentStrings((LPCTSTR)inputPathDll, outputPathDll, sizeof(outputPathDll) / sizeof(*outputPathDll));
-		if (!result) {
-			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
-			return 1;
+		char inputJdkDll[] = "%JAVA_HOME%\\jre\\bin\\server\\jvm.dll";
+		TCHAR outputJdkDll[32000];
+		DWORD jdkResult = ExpandEnvironmentStrings((LPCTSTR)inputJdkDll, outputJdkDll, sizeof(outputJdkDll) / sizeof(*outputJdkDll));
+
+		char inputJreDll[] = "%JAVA_HOME%\\bin\\server\\jvm.dll";
+		TCHAR outputJreDll[32000];
+		DWORD jreResult = ExpandEnvironmentStrings((LPCTSTR)inputJreDll, outputJreDll, sizeof(outputJreDll) / sizeof(*outputJreDll));
+
+		if (!jdkResult && !jreResult) {
+			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed.");
+			return -1;
 		}
 
-		HINSTANCE jvmDLL = LoadLibrary(outputPathDll);
+		HINSTANCE jvmDLL = LoadLibrary(outputJdkDll);
 		if (!jvmDLL) {
-			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
-			return 1;
+			jvmDLL = LoadLibrary(outputJreDll);
+
+			if (!jvmDLL) {
+				Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed.");
+				return -1;
+			}
 		}
 
 		JVMDLLFunction createJavaVMFunction = (JVMDLLFunction)GetProcAddress(jvmDLL, "JNI_CreateJavaVM");
 		if (!createJavaVMFunction) {
-			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
-			return 1;
+			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed.");
+			return -1;
 		}
 	#endif
 
@@ -231,6 +239,8 @@ Plugin::Plugin()
 		std::string classPath;
 		Lua::ParseArguments(L, classPath);
 		int id = Plugin::Get()->CreateJava(classPath);
+
+		if (id < 0) return 0;
 		return Lua::ReturnValues(L, id);
 	});
 
@@ -239,6 +249,7 @@ Plugin::Plugin()
 		int id;
 		Lua::ParseArguments(L, id);
 		Plugin::Get()->DestroyJava(id);
+
 		return 1;
 	});
 
