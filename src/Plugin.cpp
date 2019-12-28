@@ -2,7 +2,10 @@
 #include <iostream>
 #include <cstring>
 #include <string>
-#include <windows.h>
+
+#ifdef _WIN32
+	#include <windows.h>
+#endif
 
 #include "Plugin.hpp"
 
@@ -11,7 +14,9 @@
 #endif
 #define LUA_DEFINE(name) Define(#name, [](lua_State *L) -> int
 
-typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
+#ifdef _WIN32
+	typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
+#endif
 
 int Plugin::CreateJava(std::string classPath)
 {
@@ -21,7 +26,15 @@ int Plugin::CreateJava(std::string classPath)
 	}
 
 	#ifdef _WIN32
-		HINSTANCE jvmDLL = LoadLibrary(".\\jre\\bin\\server\\jvm.dll");
+		char inputPathDll[] = "%JAVA_HOME%\\jre\\bin\\server\\jvm.dll";
+		TCHAR outputPathDll[32000];
+		DWORD result = ExpandEnvironmentStrings((LPCTSTR)inputPathDll, outputPathDll, sizeof(outputPathDll) / sizeof(*outputPathDll));
+		if (!result) {
+			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
+			return 1;
+		}
+
+		HINSTANCE jvmDLL = LoadLibrary(outputPathDll);
 		if (!jvmDLL) {
 			Onset::Plugin::Get()->Log("Failed to find JDK/JRE jvm.dll, please ensure Java 8 is installed. Exiting...");
 			return 1;
