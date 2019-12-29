@@ -7,6 +7,8 @@ configure_file(
 )
 
 add_library(OnsetJavaPlugin MODULE
+	JavaEnv.cpp
+	JavaEnv.hpp
 	Plugin.cpp
 	Plugin.hpp
 	PluginInterface.cpp
