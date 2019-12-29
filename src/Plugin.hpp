@@ -6,6 +6,7 @@
 #include <jni.h>
 #include <PluginSDK.h>
 #include "Singleton.hpp"
+#include "JavaEnv.hpp"
 
 class Plugin : public Singleton<Plugin>
 {
@@ -13,8 +14,7 @@ class Plugin : public Singleton<Plugin>
 private:
 	Plugin();
 	~Plugin() = default;
-	JavaVM *jvms[30];
-	JNIEnv* jenvs[30];
+	JavaEnv* jenvs[30];
 
 private:
 	using FuncInfo_t = std::tuple<const char *, lua_CFunction>;
@@ -33,9 +33,6 @@ public:
 	}
 	int CreateJava(std::string classPath);
 	void DestroyJava(int id);
-	JavaVM* GetJavaVM(int id);
-	JNIEnv* GetJavaEnv(int id);
-
-	jobject ToJavaObject(JNIEnv* jenv, Lua::LuaValue value);
-	Lua::LuaValue ToLuaValue(JNIEnv* jenv, jobject object);
+	JavaEnv* GetJavaEnv(int id);
+	JavaEnv* FindJavaEnv(JNIEnv* jenv);
 };
