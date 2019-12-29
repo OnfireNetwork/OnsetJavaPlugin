@@ -17,6 +17,7 @@ private:
 	~Plugin() = default;
 	JavaEnv* jenvs[30];
 	std::map<std::string, lua_State*> packageStates;
+	std::map<lua_State*, std::string> statePackages;
 
 private:
 	using FuncInfo_t = std::tuple<const char *, lua_CFunction>;
@@ -35,12 +36,17 @@ public:
 	}
 	void AddPackage(std::string name, lua_State* state) {
 		this->packageStates[name] = state;
+		this->statePackages[state] = name;
 	}
 	void RemovePackage(std::string name) {
+		this->statePackages[this->packageStates[name]] = nullptr;
 		this->packageStates[name] = nullptr;
 	}
 	lua_State* GetPackageState(std::string name) {
 		return this->packageStates[name];
+	}
+	std::string GetStatePackage(lua_State* L) {
+		return this->statePackages[L];
 	}
 	int CreateJava(std::string classPath);
 	void DestroyJava(int id);

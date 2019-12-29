@@ -9,6 +9,25 @@ typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
 #include <tuple>
 #include <functional>
 #include <sstream>
+#include "Plugin.hpp"
+
+void JLuaFunctionClose(JNIEnv* jenv, jclass jcl, jobject instance) {
+	(void*)jcl;
+	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
+	if (env == nullptr) {
+		return;
+	}
+	env->LuaFunctionClose(instance);
+}
+
+jobjectArray JLuaFunctionCall(JNIEnv* jenv, jclass jcl, jobject instance, jobjectArray args) {
+	(void*)jcl;
+	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
+	if (env == nullptr) {
+		return NULL;
+	}
+	return env->LuaFunctionCall(instance, args);
+}
 
 JavaEnv::JavaEnv(std::string classPath) {
 	this->env = nullptr;
@@ -59,9 +78,57 @@ JavaEnv::JavaEnv(std::string classPath) {
 	#elif _WIN32
 		createJavaVMFunction(&this->vm, (void**)&this->env, &vm_args);
 	#endif
+	this->luaFunctionClass = this->env->FindClass("lua/LuaFunction");
+	if (this->luaFunctionClass != NULL) {
+		JNINativeMethod methods[] = {
+			{(char*)"close", (char*)"()V", (void*)JLuaFunctionClose },
+			{(char*)"call", (char*)"([Ljava/lang/Object;)[Ljava/lang/Object;", (void*)JLuaFunctionCall }
+		};
+		this->env->RegisterNatives(this->luaFunctionClass, methods, 2);
+		printf("LuaFunction Support enabled\n");
+	}
 }
 
-jobject JavaEnv::ToJavaObject(Lua::LuaValue value)
+void JavaEnv::LuaFunctionClose(jobject instance) {
+	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
+	int id = this->env->GetIntField(instance, fField);
+	this->luaFunctions[id] = NULL;
+}
+
+jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
+	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
+	int id = this->env->GetIntField(instance, fField);
+	jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
+	jstring packageName = (jstring) this->env->GetObjectField(instance, pField);
+	const char* packageNameStr = this->env->GetStringUTFChars(packageName, nullptr);
+	lua_State* L = Plugin::Get()->GetPackageState(packageNameStr);
+	this->env->DeleteLocalRef(packageName);
+	Lua::LuaArgs_t prevArgs;
+	Lua::ParseArguments(L, prevArgs);
+	int prevSize = static_cast<int>(prevArgs.size());
+	lua_pop(L, prevSize);
+	int argsLength = this->env->GetArrayLength(args);
+	Lua::PushValueToLua(this->luaFunctions[id], L);
+	for (jsize i = 0; i < argsLength; i++) {
+		Lua::PushValueToLua(this->ToLuaValue(this->env->GetObjectArrayElement(args, i)), L);
+	}
+	Lua::LuaArgs_t ReturnValues;
+	int status = lua_pcall(L, argsLength, LUA_MULTRET, 0);
+	if (status == LUA_OK) {
+		Lua::ParseArguments(L, ReturnValues);
+		size_t returnCount = ReturnValues.size();
+		lua_pop(L, (int)returnCount);
+		jclass objectCls = this->env->FindClass("Ljava/lang/Object;");
+		jobjectArray returns = this->env->NewObjectArray((jsize)returnCount, objectCls, NULL);
+		for (jsize i = 0; i < returnCount; i++) {
+			this->env->SetObjectArrayElement(returns, i, this->ToJavaObject(L, ReturnValues[i]));
+		}
+		return returns;
+	}
+	return NULL;
+}
+
+jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 {
 	JNIEnv* jenv = this->GetEnv();
 	switch (value.GetType())
@@ -92,11 +159,30 @@ jobject JavaEnv::ToJavaObject(Lua::LuaValue value)
 		jmethodID putMethod = jenv->GetMethodID(jcls, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
 		Lua::LuaTable_t table = value.GetValue<Lua::LuaTable_t>();
-		table->ForEach([jenv, this, jmap, putMethod](Lua::LuaValue k, Lua::LuaValue v) {
-			jenv->CallObjectMethod(jmap, putMethod, this->ToJavaObject(k), this->ToJavaObject(v));
+		table->ForEach([jenv, this, L, jmap, putMethod](Lua::LuaValue k, Lua::LuaValue v) {
+			jenv->CallObjectMethod(jmap, putMethod, this->ToJavaObject(L, k), this->ToJavaObject(L, v));
 			});
 
 		return jmap;
+	} break;
+	case Lua::LuaValue::Type::FUNCTION:
+	{
+		if (this->luaFunctionClass == NULL)
+			return NULL;
+		std::string packageNameStr = Plugin::Get()->GetStatePackage(L);
+		jstring packageName = this->env->NewStringUTF(packageNameStr.c_str());
+		jobject javaLuaFunction = jenv->NewObject(this->luaFunctionClass, jenv->GetMethodID(this->luaFunctionClass, "<init>", "()V"));
+		int id = 1;
+		while (this->luaFunctions.count(id)){
+			id++;
+		}
+		this->luaFunctions[id] = value;
+		jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
+		this->env->SetIntField(javaLuaFunction, fField, id);
+		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
+		this->env->SetObjectField(javaLuaFunction, pField, packageName);
+		this->env->DeleteLocalRef(packageName);
+		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
 	case Lua::LuaValue::Type::INVALID:

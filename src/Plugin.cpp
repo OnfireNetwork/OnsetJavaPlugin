@@ -120,7 +120,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
 	for (jsize i = 0; i < returnsLength; i++) {
-		jenv->SetObjectArrayElement(returns, i, env->ToJavaObject(luaReturns[i]));
+		jenv->SetObjectArrayElement(returns, i, env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]));
 	}
 	jenv->DeleteLocalRef(packageName);
 	jenv->DeleteLocalRef(functionName);
@@ -194,7 +194,7 @@ Plugin::Plugin()
 		jobject* params = new jobject[arg_size - 4];
 		for (int i = 4; i < arg_size; i++) {
 			auto const& value = arg_list[i];
-			params[i - 4] = env->ToJavaObject(value);
+			params[i - 4] = env->ToJavaObject(L, value);
 		}
 		jobject returnValue = Plugin::Get()->GetJavaEnv(id)->CallStatic(className, methodName, signature, params, arg_size - 4);
 		if (returnValue != NULL) {
