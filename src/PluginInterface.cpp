@@ -40,9 +40,10 @@ EXPORT(void) OnPackageLoad(const char *PackageName, lua_State *L)
 	(void)PackageName;
 	for (auto const &f : Plugin::Get()->GetFunctions())
 		Lua::RegisterPluginFunction(L, std::get<0>(f), std::get<1>(f));
+	Plugin::Get()->AddPackage(PackageName, L);
 }
 
 EXPORT(void) OnPackageUnload(const char *PackageName)
 {
-	(void)PackageName;
+	Plugin::Get()->RemovePackage(PackageName);
 }

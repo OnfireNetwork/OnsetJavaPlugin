@@ -18,6 +18,26 @@
 	typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
 #endif
 
+Lua::LuaArgs_t CallLuaFunction(lua_State* ScriptVM, const char* LuaFunctionName, Lua::LuaArgs_t* Arguments) {
+	Lua::LuaArgs_t ReturnValues;
+	int ArgCount = lua_gettop(ScriptVM);
+	lua_getglobal(ScriptVM, LuaFunctionName);
+	int argc = 0;
+	if (Arguments) {
+		for (auto const& e : *Arguments) {
+			Lua::PushValueToLua(e, ScriptVM);
+			argc++;
+		}
+	}
+	int Status = lua_pcall(ScriptVM, argc, LUA_MULTRET, 0);
+	ArgCount = lua_gettop(ScriptVM) - ArgCount;
+	if (Status == LUA_OK) {
+		Lua::ParseArguments(ScriptVM, ReturnValues);
+		lua_pop(ScriptVM, ArgCount);
+	}
+	return ReturnValues;
+}
+
 int Plugin::CreateJava(std::string classPath)
 {
 	int id = 0;
@@ -79,6 +99,34 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
 	jenv->DeleteLocalRef(event);
 }
 
+jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
+	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
+	if (env == nullptr) {
+		return NULL;
+	}
+
+	(void)jcl;
+
+	const char* packageNameStr = jenv->GetStringUTFChars(packageName, nullptr);
+	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
+	int argsLength = jenv->GetArrayLength(args);
+	auto luaArgs = new Lua::LuaArgs_t();
+	for (jsize i = 0; i < argsLength; i++) {
+		luaArgs->push_back(env->ToLuaValue(jenv->GetObjectArrayElement(args, i)));
+	}
+
+	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, luaArgs);
+	size_t returnsLength = luaReturns.size();
+	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
+	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
+	for (jsize i = 0; i < returnsLength; i++) {
+		jenv->SetObjectArrayElement(returns, i, env->ToJavaObject(luaReturns[i]));
+	}
+	jenv->DeleteLocalRef(packageName);
+	jenv->DeleteLocalRef(functionName);
+	return returns;
+}
+
 Plugin::Plugin()
 {
 	for (int i = 0; i < 30; i++)
@@ -118,8 +166,9 @@ Plugin::Plugin()
 		if (clazz == nullptr) return 0;
 		JNINativeMethod methods[] = {
 			{(char*)"callEvent", (char*)"(Ljava/lang/String;Ljava/util/List;)V", (void*)CallEvent },
+			{(char*)"callGlobalFunction", (char*)"(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)[Ljava/lang/Object;", (void*)CallGlobal }
 		};
-		jenv->RegisterNatives(clazz, methods, 1);
+		jenv->RegisterNatives(clazz, methods, 2);
 		Lua::ReturnValues(L, 1);
 		return 1;
 	});
@@ -137,6 +186,7 @@ Plugin::Plugin()
 
 		int arg_size = static_cast<int>(arg_list.size());
 		if (arg_size < 4) return 0;
+		lua_pop(L, arg_size);
 
 		std::string className = arg_list[1].GetValue<std::string>();
 		std::string methodName = arg_list[2].GetValue<std::string>();
@@ -146,8 +196,7 @@ Plugin::Plugin()
 			auto const& value = arg_list[i];
 			params[i - 4] = env->ToJavaObject(value);
 		}
-
-		jobject returnValue = Plugin::Get()->GetJavaEnv(id)->CallStatic(className, methodName, signature, params);
+		jobject returnValue = Plugin::Get()->GetJavaEnv(id)->CallStatic(className, methodName, signature, params, arg_size - 4);
 		if (returnValue != NULL) {
 			Lua::LuaValue value = env->ToLuaValue(returnValue);
 			if (!(value == NULL)) {

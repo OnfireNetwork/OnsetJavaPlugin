@@ -75,6 +75,11 @@ jobject JavaEnv::ToJavaObject(Lua::LuaValue value)
 		jclass jcls = jenv->FindClass("java/lang/Integer");
 		return jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
 	} break;
+	case Lua::LuaValue::Type::NUMBER:
+	{
+		jclass jcls = jenv->FindClass("java/lang/Double");
+		return jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(D)V"), value.GetValue<double>());
+	} break;
 	case Lua::LuaValue::Type::BOOLEAN:
 	{
 		jclass jcls = jenv->FindClass("java/lang/Boolean");
@@ -126,6 +131,13 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 		Lua::LuaValue value(result);
 		return value;
 	}
+	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Double"))) {
+		jmethodID doubleValueMethod = jenv->GetMethodID(jcls, "doubleValue", "()D");
+		jdouble result = jenv->CallDoubleMethod(object, doubleValueMethod);
+		
+		Lua::LuaValue value(result);
+		return value;
+	}
 	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Boolean"))) {
 		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
 		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
@@ -173,17 +185,13 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 	return NULL;
 }
 
-jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::string signature, jobject* params) {
-	size_t paramsLength = sizeof(params);
-	if (paramsLength > 0) {
-		paramsLength = paramsLength / sizeof(params[0]);
-	}
+jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::string signature, jobject* params, size_t paramsLength) {
 	size_t spos = signature.find(")");
 	std::string returnSignature = signature.substr(spos + 1, signature.length() - spos);
 	jclass clazz = this->env->FindClass(className.c_str());
-	if (clazz == nullptr) return 0;
+	if (clazz == nullptr) return NULL;
 	jmethodID methodID = this->env->GetStaticMethodID(clazz, methodName.c_str(), signature.c_str());
-	if (methodID == nullptr) return 0;
+	if (methodID == nullptr) return NULL;
 	jobject returnValue = NULL;
 	if (!returnSignature.compare("V")) {
 		switch (paramsLength) {

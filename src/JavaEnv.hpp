@@ -22,6 +22,6 @@ public:
 	}
 	Lua::LuaValue ToLuaValue(jobject object);
 	jobject ToJavaObject(Lua::LuaValue value);
-	jobject CallStatic(std::string className, std::string methodName, std::string signature, jobject* params);
+	jobject CallStatic(std::string className, std::string methodName, std::string signature, jobject* params, size_t paramsLength);
 };
 
