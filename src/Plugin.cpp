@@ -146,11 +146,15 @@ Plugin::Plugin()
 				classPath = "java";
 				for (const auto& entry : std::filesystem::directory_iterator("java")) {
 					if (!entry.is_directory()) {
-						classPath += ";" + entry.path().string();
+						std::string name = entry.path().string();
+						if (name.length() > 4) {
+							if (!name.substr(name.length() - 4, 4).compare(".jar")) {
+								classPath += ";" + name;
+							}
+						}
 					}
 				}
 			}
-			printf("CP: %s\n", classPath.c_str());
 			id = Plugin::Get()->CreateJava(classPath);
 		}
 		if (id < 0) return 0;
