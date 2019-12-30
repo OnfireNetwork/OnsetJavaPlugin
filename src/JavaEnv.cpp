@@ -97,7 +97,6 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
 	jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 	int id = this->env->GetIntField(instance, fField);
-	&id;
 	jstring packageName = (jstring) this->env->GetObjectField(instance, pField);
 	const char* packageNameStr = this->env->GetStringUTFChars(packageName, nullptr);
 	lua_State* L = Plugin::Get()->GetPackageState(packageNameStr);
@@ -115,7 +114,7 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 		lua_pop(L, (int)returnCount);
 		jclass objectCls = this->env->FindClass("Ljava/lang/Object;");
 		jobjectArray returns = this->env->NewObjectArray((jsize)returnCount, objectCls, NULL);
-		for (jsize i = 0; i < returnCount; i++) {
+		for (int i = 0; i < (int) returnCount; i++) {
 			this->env->SetObjectArrayElement(returns, i, this->ToJavaObject(L, ReturnValues[i]));
 		}
 		return returns;
