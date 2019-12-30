@@ -32,6 +32,38 @@ Check out Releases for a download to Windows & Linux builds.
 
 We will be adding more data types later on.
 
+#### Using the lua function support interface
+##### Maven
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+<dependencies>
+    <dependency>
+        <groupId>com.github.OnfireNetwork</groupId>
+        <artifactId>OnsetJavaPlugin</artifactId>
+        <version>2357546bd5</version>
+    </dependency>
+</dependencies>
+```
+##### Usage
+Java:
+```java
+public static void example(LuaFunction fn){
+    fn.call("Hello from Java!");
+    fn.close(); // Always call this when you don't need the function anymore to free memory
+}
+```
+Lua:
+```lua
+CallJavaStaticMethod(java, "example/Example", "example", "(Llua/LuaFunction;)V", function(msg)
+    print(msg)
+end)
+```
+
 ### Lua Functions
 #### CreateJava
 Create a new JVM with a jar. Returns JVM ID.
