@@ -114,7 +114,7 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 		lua_pop(L, (int)returnCount);
 		jclass objectCls = this->env->FindClass("Ljava/lang/Object;");
 		jobjectArray returns = this->env->NewObjectArray((jsize)returnCount, objectCls, NULL);
-		for (int i = 0; i < (int) returnCount; i++) {
+		for (jsize i = 0; i < (int) returnCount; i++) {
 			this->env->SetObjectArrayElement(returns, i, this->ToJavaObject(L, ReturnValues[i]));
 		}
 		return returns;
