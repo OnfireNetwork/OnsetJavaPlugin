@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <filesystem>
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -134,9 +135,24 @@ Plugin::Plugin()
 
 	LUA_DEFINE(CreateJava)
 	{
-		std::string classPath;
-		Lua::ParseArguments(L, classPath);
-		int id = Plugin::Get()->CreateJava(classPath);
+		Lua::LuaArgs_t args;
+		Lua::ParseArguments(L, args);
+		int id = -1;
+		if (args.size() > 0) {
+			id = Plugin::Get()->CreateJava(args[0].GetValue<std::string>());
+		} else {
+			std::string classPath = ".";
+			if (std::filesystem::exists("java")) {
+				classPath = "java";
+				for (const auto& entry : std::filesystem::directory_iterator("java")) {
+					if (!entry.is_directory()) {
+						classPath += ";" + entry.path().string();
+					}
+				}
+			}
+			printf("CP: %s\n", classPath.c_str());
+			id = Plugin::Get()->CreateJava(classPath);
+		}
 		if (id < 0) return 0;
 		return Lua::ReturnValues(L, id);
 	});

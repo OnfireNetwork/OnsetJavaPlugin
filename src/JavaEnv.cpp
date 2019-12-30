@@ -11,8 +11,7 @@ typedef UINT(CALLBACK* JVMDLLFunction)(JavaVM**, void**, JavaVMInitArgs*);
 #include <sstream>
 #include "Plugin.hpp"
 
-void JLuaFunctionClose(JNIEnv* jenv, jclass jcl, jobject instance) {
-	(void*)jcl;
+void JLuaFunctionClose(JNIEnv* jenv, jobject instance) {
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return;
@@ -20,8 +19,7 @@ void JLuaFunctionClose(JNIEnv* jenv, jclass jcl, jobject instance) {
 	env->LuaFunctionClose(instance);
 }
 
-jobjectArray JLuaFunctionCall(JNIEnv* jenv, jclass jcl, jobject instance, jobjectArray args) {
-	(void*)jcl;
+jobjectArray JLuaFunctionCall(JNIEnv* jenv, jobject instance, jobjectArray args) {
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return NULL;
@@ -78,6 +76,7 @@ JavaEnv::JavaEnv(std::string classPath) {
 	#elif _WIN32
 		createJavaVMFunction(&this->vm, (void**)&this->env, &vm_args);
 	#endif
+
 	this->luaFunctionClass = this->env->FindClass("lua/LuaFunction");
 	if (this->luaFunctionClass != NULL) {
 		JNINativeMethod methods[] = {
@@ -85,7 +84,6 @@ JavaEnv::JavaEnv(std::string classPath) {
 			{(char*)"call", (char*)"([Ljava/lang/Object;)[Ljava/lang/Object;", (void*)JLuaFunctionCall }
 		};
 		this->env->RegisterNatives(this->luaFunctionClass, methods, 2);
-		printf("LuaFunction Support enabled\n");
 	}
 }
 
@@ -97,16 +95,13 @@ void JavaEnv::LuaFunctionClose(jobject instance) {
 
 jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
-	int id = this->env->GetIntField(instance, fField);
 	jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
+	int id = this->env->GetIntField(instance, fField);
+	&id;
 	jstring packageName = (jstring) this->env->GetObjectField(instance, pField);
 	const char* packageNameStr = this->env->GetStringUTFChars(packageName, nullptr);
 	lua_State* L = Plugin::Get()->GetPackageState(packageNameStr);
 	this->env->DeleteLocalRef(packageName);
-	Lua::LuaArgs_t prevArgs;
-	Lua::ParseArguments(L, prevArgs);
-	int prevSize = static_cast<int>(prevArgs.size());
-	lua_pop(L, prevSize);
 	int argsLength = this->env->GetArrayLength(args);
 	Lua::PushValueToLua(this->luaFunctions[id], L);
 	for (jsize i = 0; i < argsLength; i++) {

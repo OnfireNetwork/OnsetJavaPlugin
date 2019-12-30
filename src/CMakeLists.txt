@@ -27,7 +27,7 @@ target_include_directories(OnsetJavaPlugin PRIVATE
 
 set_property(TARGET OnsetJavaPlugin PROPERTY PREFIX "")
 
-set_property(TARGET OnsetJavaPlugin PROPERTY CXX_STANDARD 11)
+set_property(TARGET OnsetJavaPlugin PROPERTY CXX_STANDARD 17)
 set_property(TARGET OnsetJavaPlugin PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
