@@ -3,7 +3,7 @@ Authors: JanHolger, Digital
 
 ### Features
 * Create JVMs.
-* Communicate from Lua <-> Java.
+* Communicate between Lua <-> Java.
 
 ### Download
 Check out Releases for a download to Windows & Linux builds.
@@ -17,12 +17,15 @@ Check out Releases for a download to Windows & Linux builds.
 #### Method Parameters
 * Lua String -> String (java.lang.String)
 * Lua Int -> Integer (java.lang.Integer)
+* Lua Number -> Double (java.lang.Double)
 * Lua Bool -> Boolean (java.lang.Boolean)
 * Lua Table -> Map (java.util.HashMap)
+* Lua Function -> LuaFunction (lua.LuaFunction, `OnsetJavaPluginSupport-1.0.jar` required)
 
 #### Return Values
 * String (java.lang.String)
 * Integer (java.lang.Integer)
+* Double (java.lang.Double)
 * Boolean (java.lang.Boolean)
 * List (java.util.List)
 * Map (java.util.Map)
@@ -35,7 +38,7 @@ Create a new JVM with a jar. Returns JVM ID.
 ```lua
 local jvmID = CreateJava(path)
 ```
-* **path** Relative path to the jar file, relative from the root server directory. Example: path/to/file.jar
+* **path** Classpath for the jvm. This parameter is optional. When not provided it will include the "java" directory aswell as all jar files inside or "." when "java" doesn't exist.
 
 #### DestroyJava
 Destroy a JVM.
@@ -64,21 +67,33 @@ LinkJavaAdapter(jvmID, className)
 * **className** Class name of the class you want to call a method in, must include package path as well. Example: dev/joseph/Adapter (dev.joseph.Adapter).
 
 ### Java Native Methods
-#### callEvent
-Call Lua events from Java.
+You can use a native adapter to call lua functions.
 ```java
+package example;
 public class Adapter {
-    public native static void callEvent(String event, List<Object> args);
+    public native static void callEvent(String event, Object... args);
+    public native static Object[] callGlobalFunction(String packageName, String functionName, Object... args);
 }
 ```
-Example:
-```java
-Adapter.callEvent("testCallEvent", Arrays.asList("lol", "haha", "yeah"));
-Adapter.callEvent("testCallEvent", Arrays.asList(1, 2, "hi", 384, "yeeep", true, false));
-```
 ```lua
-function testCallEvent(arg1)
-  print ('first arg is ' .. arg1)
-end
-AddEvent('testCallEvent', testCallEvent)
+LinkJavaAdapter(java, "example/Adapter")
+```
+#### callEvent
+Java:
+```java
+Adapter.callEvent("testCallEvent", "hi", Integer.valueOf(123), Boolean.valueOf(true));
+```
+Lua:
+```lua
+AddEvent('testCallEvent', function(s,i,b)
+    print(s)
+    print(i)
+    print(b)
+end)
+```
+#### callGlobalFunction
+*Make sure to use this method only on the main thread. Using it outside the mainthread can result in unexpected behavior.*  
+Java:
+```java
+Adapter.callGlobalFunction("AddPlayerChatAll", "Hello World");
 ```
