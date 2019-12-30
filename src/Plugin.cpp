@@ -4,8 +4,10 @@
 #include <string>
 #ifdef _WIN32
 #include <filesystem>
+namespace fs = std::filesystem;
 #else
 #include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #endif
 
 
@@ -147,9 +149,9 @@ Plugin::Plugin()
 			id = Plugin::Get()->CreateJava(args[0].GetValue<std::string>());
 		} else {
 			std::string classPath = ".";
-			if (std::filesystem::exists("java")) {
+			if (fs::exists("java")) {
 				classPath = "java";
-				for (const auto& entry : std::filesystem::directory_iterator("java")) {
+				for (const auto& entry : fs::directory_iterator("java")) {
 					if (!entry.is_directory()) {
 						std::string name = entry.path().string();
 						if (name.length() > 4) {
