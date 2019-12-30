@@ -2,7 +2,12 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#ifdef _WIN32
 #include <filesystem>
+#else
+#include <experimental/filesystem>
+#endif
+
 
 #ifdef _WIN32
 	#include <windows.h>
