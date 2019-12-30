@@ -20,7 +20,7 @@ Check out Releases for a download to Windows & Linux builds.
 * Lua Number -> Double (java.lang.Double)
 * Lua Bool -> Boolean (java.lang.Boolean)
 * Lua Table -> Map (java.util.HashMap)
-* Lua Function -> LuaFunction (lua.LuaFunction, `OnsetJavaPluginSupport-1.0.jar` required)
+* Lua Function -> LuaFunction (lua.LuaFunction, lua function support interface required)
 
 #### Return Values
 * String (java.lang.String)
