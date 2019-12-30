@@ -73,27 +73,21 @@ JavaEnv* Plugin::FindJavaEnv(JNIEnv* jenv) {
 	return nullptr;
 }
 
-void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobject argsList) {
+void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return;
 	}
-	
 	(void) jcl;
 
 	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
 	auto args = new Lua::LuaArgs_t();
 
-	if (jenv->IsInstanceOf(argsList, jenv->FindClass("java/util/List"))) {
-		jclass argsCls = jenv->GetObjectClass(argsList);
-		jmethodID sizeMethod = jenv->GetMethodID(argsCls, "size", "()I");
-		jmethodID getMethod = jenv->GetMethodID(argsCls, "get", "(I)Ljava/lang/Object;");
-		jint len = jenv->CallIntMethod(argsList, sizeMethod);
+	int argsCount = jenv->GetArrayLength(argsList);
 
-		for (jint i = 0; i < len; i++) {
-			jobject arrayElement = jenv->CallObjectMethod(argsList, getMethod, i);
-			args->push_back(env->ToLuaValue(arrayElement));
-		}
+	for (jsize i = 0; i < argsCount; i++) {
+		jobject arrayElement = jenv->GetObjectArrayElement(argsList, i);
+		args->push_back(env->ToLuaValue(arrayElement));
 	}
 
 	Onset::Plugin::Get()->CallEvent(eventStr, args);
