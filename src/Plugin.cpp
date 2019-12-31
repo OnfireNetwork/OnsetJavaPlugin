@@ -181,7 +181,7 @@ Plugin::Plugin()
 		jclass clazz = jenv->FindClass(className.c_str());
 		if (clazz == nullptr) return 0;
 		JNINativeMethod methods[] = {
-			{(char*)"callEvent", (char*)"(Ljava/lang/String;Ljava/util/List;)V", (void*)CallEvent },
+			{(char*)"callEvent", (char*)"(Ljava/lang/String;[Ljava/lang/Object;)V", (void*)CallEvent },
 			{(char*)"callGlobalFunction", (char*)"(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)[Ljava/lang/Object;", (void*)CallGlobal }
 		};
 		jenv->RegisterNatives(clazz, methods, 2);
