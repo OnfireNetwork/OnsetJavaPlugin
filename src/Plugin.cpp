@@ -145,7 +145,11 @@ Plugin::Plugin()
 						std::string name = entry.path().string();
 						if (name.length() > 4) {
 							if (!name.substr(name.length() - 4, 4).compare(".jar")) {
+#ifdef _WIN32
 								classPath += ";" + name;
+#else
+								classPath += ":" + name;
+#endif
 							}
 						}
 					}
