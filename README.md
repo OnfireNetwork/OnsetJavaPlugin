@@ -9,9 +9,6 @@ Authors: JanHolger, Digital
 Interested in writing your entire gamemode in java?
 You can use our [language framework](https://github.com/OnfireNetwork/OnsetJava) with tons of features running on top of this plugin!
 
-### Download
-Check out Releases for a download to Windows & Linux builds.
-
 ### Installation
 1. Get OnsetJavaPlugin and place it in your plugins directory.
 **Windows:** Download OnsetJavaPlugin.dll from Releases ([HERE](https://github.com/OnfireNetwork/OnsetJavaPlugin/releases)).
