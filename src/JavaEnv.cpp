@@ -72,9 +72,10 @@ JavaEnv::JavaEnv(std::string classPath) {
 	vm_args.ignoreUnrecognized = false;
 
 	#ifdef __linux__ 
-		JNI_CreateJavaVM(&this->vm, (void**)&this->env, &vm_args);
+		int res = JNI_CreateJavaVM(&this->vm, (void**)&this->env, &vm_args);
 	#elif _WIN32
-		createJavaVMFunction(&this->vm, (void**)&this->env, &vm_args);
+		int res = createJavaVMFunction(&this->vm, (void**)&this->env, &vm_args);
+		printf("CreateJava Return: %d", res);
 	#endif
 
 	this->luaFunctionClass = this->env->FindClass("lua/LuaFunction");
@@ -222,7 +223,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
 		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
 
-		Lua::LuaValue value(result);
+		Lua::LuaValue value((bool) result);
 		return value;
 	}
 	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/util/List"))) {
