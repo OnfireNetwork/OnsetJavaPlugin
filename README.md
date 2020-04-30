@@ -13,9 +13,11 @@ You can use our [language framework](https://github.com/OnfireNetwork/OnsetJava)
 Check out Releases for a download to Windows & Linux builds.
 
 ### Installation
-1. Download OnsetJavaPlugin.dll (Windows) & OnsetJavaPlugin.so (Linux) from Releases ([HERE](https://github.com/OnfireNetwork/OnsetJavaPlugin/releases)) and place inside plugins folder.
-1. Ensure Java 8 JDK/JRE 64bit is installed.
-1. Enable "OnsetJavaPlugin" as a plugin inside server_config.json.
+1. Get OnsetJavaPlugin and place it in your plugins directory.
+**Windows:** Download OnsetJavaPlugin.dll from Releases ([HERE](https://github.com/OnfireNetwork/OnsetJavaPlugin/releases)).
+**Linux:** Make sure to have the latest versions of cmake and gcc/g++ or any other compiler that is cmake compatible and capable of building CXX17. The debian and ubuntu versions we tried for building didn't come with compatible versions in their package sources. You might need to manually install those. We recommend to do that on an unused vm as changing the gcc/g++ version might break some of your installed software packages. Then `git clone https://github.com/OnfireNetwork/OnsetJavaPlugin`, `cd OnsetJavaPlugin`, `cmake .` and `make` for building.
+2. Ensure Java 8 JDK/JRE 64bit is installed.
+3. Enable "OnsetJavaPlugin" as a plugin inside server_config.json.
 
 ### Data Types we support
 #### Method Parameters
