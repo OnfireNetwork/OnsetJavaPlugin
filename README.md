@@ -5,6 +5,10 @@ Authors: JanHolger, Digital
 * Create JVMs.
 * Communicate between Lua <-> Java.
 
+### OnsetJava
+Interested in writing your entire gamemode in java?
+You can use our [language framework](https://github.com/OnfireNetwork/OnsetJava) with tons of features running on top of this plugin!
+
 ### Download
 Check out Releases for a download to Windows & Linux builds.
 
