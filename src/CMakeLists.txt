@@ -51,7 +51,6 @@ elseif(UNIX)
 		-Wextra
 		-pedantic
 		-Werror
-		-Wno-unused-function
 	)
 endif()
 
