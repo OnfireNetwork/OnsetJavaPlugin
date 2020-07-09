@@ -78,7 +78,6 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	if (env == nullptr) {
 		return;
 	}
-	(void) jcl;
 
 	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
 	auto args = new Lua::LuaArgs_t();
@@ -93,7 +92,9 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	Onset::Plugin::Get()->CallEvent(eventStr, args);
 
 	jenv->ReleaseStringUTFChars(event, eventStr);
+	jenv->DeleteLocalRef(jcl);
 	jenv->DeleteLocalRef(event);
+	jenv->DeleteLocalRef(argsList);
 }
 
 jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
@@ -119,8 +120,12 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	for (jsize i = 0; i < (int) returnsLength; i++) {
 		jenv->SetObjectArrayElement(returns, i, env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]));
 	}
+	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
+	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
+	jenv->DeleteLocalRef(jcl);
 	jenv->DeleteLocalRef(packageName);
 	jenv->DeleteLocalRef(functionName);
+	jenv->DeleteLocalRef(args);
 	return returns;
 }
 
