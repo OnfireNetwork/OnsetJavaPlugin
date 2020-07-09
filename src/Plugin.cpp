@@ -22,6 +22,8 @@ namespace fs = std::filesystem;
 #endif
 
 Lua::LuaArgs_t CallLuaFunction(lua_State* ScriptVM, const char* LuaFunctionName, Lua::LuaArgs_t* Arguments) {
+	Onset::Plugin::Get()->Log("Function Name: %s", LuaFunctionName);
+	Onset::Plugin::Get()->Log("Function Arg Count: %i", Arguments->size);
 	Lua::LuaArgs_t ReturnValues;
 	int ArgCount = lua_gettop(ScriptVM);
 	lua_getglobal(ScriptVM, LuaFunctionName);
