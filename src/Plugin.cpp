@@ -25,7 +25,7 @@ Lua::LuaArgs_t CallLuaFunction(lua_State* ScriptVM, const char* LuaFunctionName,
 	Lua::LuaArgs_t stack;
 	Lua::ParseArguments(ScriptVM, stack);
 	int stack_size = static_cast<int>(stack.size());
-	lua_pop(L, stack_size);
+	lua_pop(ScriptVM, stack_size);
 	Lua::LuaArgs_t ReturnValues;
 	int ArgCount = lua_gettop(ScriptVM);
 	lua_getglobal(ScriptVM, LuaFunctionName);
