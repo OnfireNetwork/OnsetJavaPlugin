@@ -58,7 +58,7 @@ JavaEnv::JavaEnv(std::string classPath) {
 	#endif
 
 	static std::stringstream optionString;
-	optionString << "-Djava.class.path=" << classPath;
+	optionString << "-Djava.class.path=" << classPath << " -Xmx256M -Xms256M";
 
 	JavaVMInitArgs vm_args;
 	auto* options = new JavaVMOption[1];
