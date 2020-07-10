@@ -122,11 +122,11 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
 	for (jsize i = 0; i < (int) returnsLength; i++) {
-		jenv->SetObjectArrayElement(returns, i, env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]));
+		jobject obj = env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]);
+		jenv->SetObjectArrayElement(returns, i, obj);
+		env->GetEnv()->DeleteLocalRef(obj);
 	}
-	Onset::Plugin::Get()->Log("%s", packageNameStr);
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
-	Onset::Plugin::Get()->Log("%s", packageNameStr);
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	jenv->DeleteLocalRef(jcl);
 	jenv->DeleteLocalRef(packageName);
