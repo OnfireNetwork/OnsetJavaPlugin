@@ -426,7 +426,7 @@ jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::
 		}
 	}
 	this->env->DeleteLocalRef(clazz);
-	for (int i = 0; i < paramsLength; i++) {
+	for (size_t i = 0; i < paramsLength; i++) {
 		this->env->DeleteLocalRef(params[i]);
 	}
 	return returnValue;
