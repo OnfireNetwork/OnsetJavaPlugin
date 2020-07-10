@@ -103,6 +103,7 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 	const char* packageNameStr = this->env->GetStringUTFChars(packageName, nullptr);
 	lua_State* L = Plugin::Get()->GetPackageState(packageNameStr);
 	this->env->ReleaseStringUTFChars(packageName, packageNameStr);
+	Onset::Plugin::Get()->Log("%s", packageNameStr);
 	this->env->DeleteLocalRef(packageName);
 	this->env->DeleteLocalRef(instance);
 	int argsLength = this->env->GetArrayLength(args);
