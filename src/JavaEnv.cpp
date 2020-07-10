@@ -168,7 +168,11 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 
 		Lua::LuaTable_t table = value.GetValue<Lua::LuaTable_t>();
 		table->ForEach([jenv, this, L, jmap, putMethod](Lua::LuaValue k, Lua::LuaValue v) {
-			jenv->CallObjectMethod(jmap, putMethod, this->ToJavaObject(L, k), this->ToJavaObject(L, v));
+			jobject objk = this->ToJavaObject(L, k);
+			jobject objv = this->ToJavaObject(L, v);
+			jenv->CallObjectMethod(jmap, putMethod, objk, objv);
+			jenv->DeleteLocalRef(objk);
+			jenv->DeleteLocalRef(objv);
 			});
 		jenv->DeleteLocalRef(jcls);
 		return jmap;
@@ -422,5 +426,8 @@ jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::
 		}
 	}
 	this->env->DeleteLocalRef(clazz);
+	for (int i = 0; i < paramsLength; i++) {
+		this->env->DeleteLocalRef(params[i]);
+	}
 	return returnValue;
 }
