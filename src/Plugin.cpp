@@ -101,7 +101,7 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	jenv->DeleteLocalRef(argsList);
 }
 
-char* lastReturn;
+jobjectArray lastReturn;
 
 jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
@@ -135,18 +135,15 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jenv->DeleteLocalRef(packageName);
 	jenv->DeleteLocalRef(functionName);
 	jenv->DeleteLocalRef(args);
-	lastReturn = (char*) returns;
-	printf("Test A: %c\n", lastReturn[0]);
-	jenv->DeleteLocalRef(returns);
-	printf("Test B: %c\n", lastReturn[0]);
+	lastReturn = returns;
 	return returns;
 }
 
-void TestGlobal(JNIEnv* jenv, jclass jcl) {
+void CleanGlobal(JNIEnv* jenv, jclass jcl) {
 	(void)jenv;
 	(void)jcl;
 	jenv->DeleteLocalRef(jcl);
-	printf("Test C: %c\n", lastReturn[0]);
+	jenv->DeleteLocalRef(lastReturn);
 }
 
 Plugin::Plugin()
@@ -212,7 +209,7 @@ Plugin::Plugin()
 		JNINativeMethod methods[] = {
 			{(char*)"callEvent", (char*)"(Ljava/lang/String;[Ljava/lang/Object;)V", (void*)CallEvent },
 			{(char*)"callGlobalFunction", (char*)"(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)[Ljava/lang/Object;", (void*)CallGlobal },
-			{(char*)"testGlobalFunction", (char*)"()V", (void*)TestGlobal }
+			{(char*)"cleanGlobalFunction", (char*)"()V", (void*)CleanGlobal }
 		};
 		jenv->RegisterNatives(clazz, methods, 3);
 		Lua::ReturnValues(L, 1);
