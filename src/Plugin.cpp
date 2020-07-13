@@ -137,6 +137,8 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jenv->DeleteLocalRef(args);
 	lastReturn = (char*) returns;
 	printf("Test A: %c\n", lastReturn[0]);
+	jenv->DeleteLocalRef(returns);
+	printf("Test B: %c\n", lastReturn[0]);
 	return returns;
 }
 
@@ -144,7 +146,7 @@ void TestGlobal(JNIEnv* jenv, jclass jcl) {
 	(void)jenv;
 	(void)jcl;
 	jenv->DeleteLocalRef(jcl);
-	printf("Test B: %c\n", lastReturn[0]);
+	printf("Test C: %c\n", lastReturn[0]);
 }
 
 Plugin::Plugin()
