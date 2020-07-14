@@ -84,7 +84,7 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	}
 
 	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
-	Lua::LuaArgs_t args = Lua::LuaArgs_t();
+	auto args = new Lua::LuaArgs_t();
 
 	int argsCount = jenv->GetArrayLength(argsList);
 
@@ -265,6 +265,7 @@ Plugin::Plugin()
 						break;
 				}
 			}
+			value.~LuaValue();
 		}
 		else {
 			Lua::ReturnValues(L, 1);
