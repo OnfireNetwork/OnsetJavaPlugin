@@ -94,6 +94,7 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	}
 
 	Onset::Plugin::Get()->CallEvent(eventStr, args);
+	delete args;
 
 	jenv->ReleaseStringUTFChars(event, eventStr);
 	jenv->DeleteLocalRef(jcl);
@@ -116,10 +117,11 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	int argsLength = jenv->GetArrayLength(args);
 	auto luaArgs = new Lua::LuaArgs_t();
 	for (jsize i = 0; i < argsLength; i++) {
-		luaArgs->push_back(env->ToLuaValue(jenv->GetObjectArrayElement(args, i)));
+		Lua::LuaValue val = env->ToLuaValue(jenv->GetObjectArrayElement(args, i));
+		luaArgs->push_back(val);
 	}
-
 	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, luaArgs);
+	delete luaArgs;
 	size_t returnsLength = luaReturns.size();
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
@@ -128,6 +130,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		jenv->SetObjectArrayElement(returns, i, obj);
 		env->GetEnv()->DeleteLocalRef(obj);
 	}
+	luaReturns.~vector();
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	jenv->DeleteLocalRef(jcl);
@@ -263,6 +266,7 @@ Plugin::Plugin()
 						break;
 				}
 			}
+			value.~LuaValue();
 		}
 		else {
 			Lua::ReturnValues(L, 1);

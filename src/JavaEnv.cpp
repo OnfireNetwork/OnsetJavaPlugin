@@ -91,6 +91,7 @@ JavaEnv::JavaEnv(std::string classPath) {
 void JavaEnv::LuaFunctionClose(jobject instance) {
 	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
 	int id = this->env->GetIntField(instance, fField);
+	this->luaFunctions[id].~LuaValue();
 	this->luaFunctions[id] = NULL;
 	this->env->DeleteLocalRef(instance);
 }
@@ -108,7 +109,8 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 	int argsLength = this->env->GetArrayLength(args);
 	Lua::PushValueToLua(this->luaFunctions[id], L);
 	for (jsize i = 0; i < argsLength; i++) {
-		Lua::PushValueToLua(this->ToLuaValue(this->env->GetObjectArrayElement(args, i)), L);
+		Lua::LuaValue val = this->ToLuaValue(this->env->GetObjectArrayElement(args, i));
+		Lua::PushValueToLua(val, L);
 	}
 	this->env->DeleteLocalRef(args);
 	Lua::LuaArgs_t ReturnValues;
@@ -125,6 +127,7 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 			this->env->SetObjectArrayElement(returns, i, obj);
 			this->env->DeleteLocalRef(obj);
 		}
+		ReturnValues.~vector();
 		return returns;
 	}
 	return NULL;
@@ -137,7 +140,9 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 	{
 	case Lua::LuaValue::Type::STRING:
 	{
-		return (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
+		jobject obj = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
+		value.~LuaValue();
+		return obj;
 	} break;
 	case Lua::LuaValue::Type::INTEGER:
 	{
@@ -175,6 +180,7 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 			jenv->DeleteLocalRef(objv);
 			});
 		jenv->DeleteLocalRef(jcls);
+		value.~LuaValue();
 		return jmap;
 	} break;
 	case Lua::LuaValue::Type::FUNCTION:
@@ -194,6 +200,7 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 		this->env->SetObjectField(javaLuaFunction, pField, packageName);
 		this->env->DeleteLocalRef(packageName);
+		value.~LuaValue();
 		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
@@ -202,7 +209,6 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 	default:
 		break;
 	}
-
 	return NULL;
 }
 
