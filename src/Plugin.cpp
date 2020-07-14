@@ -84,17 +84,16 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	}
 
 	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
-	auto args = new Lua::LuaArgs_t();
+	Lua::LuaArgs_t args;
 
 	int argsCount = jenv->GetArrayLength(argsList);
 
 	for (jsize i = 0; i < argsCount; i++) {
 		jobject arrayElement = jenv->GetObjectArrayElement(argsList, i);
-		args->push_back(env->ToLuaValue(arrayElement));
+		args.push_back(env->ToLuaValue(arrayElement));
 	}
 
-	Onset::Plugin::Get()->CallEvent(eventStr, args);
-	delete args;
+	Onset::Plugin::Get()->CallEvent(eventStr, &args);
 
 	jenv->ReleaseStringUTFChars(event, eventStr);
 	jenv->DeleteLocalRef(jcl);
@@ -118,6 +117,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
 
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
+	/*
 	printf("SomeFunction: %s\n", functionNameStr);
 	if (strcmp(functionNameStr, "CallRemoteEvent") == 0) {
 		jstring str = (jstring)jenv->GetObjectArrayElement(args, 1);
@@ -144,15 +144,14 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		jenv->ReleaseStringUTFChars(str, eventName);
 		jenv->DeleteLocalRef(str);
 	}
-
+	*/
 	int argsLength = jenv->GetArrayLength(args);
-	auto luaArgs = new Lua::LuaArgs_t();
+	Lua::LuaArgs_t luaArgs;
 	for (jsize i = 0; i < argsLength; i++) {
 		Lua::LuaValue val = env->ToLuaValue(jenv->GetObjectArrayElement(args, i));
-		luaArgs->push_back(val);
+		luaArgs.push_back(val);
 	}
-	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, luaArgs);
-	delete luaArgs;
+	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, &luaArgs);
 	size_t returnsLength = luaReturns.size();
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
 	for (jsize i = 0; i < (int) returnsLength; i++) {
