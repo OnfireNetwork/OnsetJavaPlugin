@@ -194,7 +194,6 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 		this->env->SetObjectField(javaLuaFunction, pField, packageName);
 		this->env->DeleteLocalRef(packageName);
-		printf("Creating new LuaFunction instance\n");
 		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
