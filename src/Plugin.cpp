@@ -121,7 +121,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	printf("SomeFunction: %s\n", functionNameStr);
 	if (strcmp(functionNameStr, "CallRemoteEvent") == 0) {
 		jstring str = (jstring)jenv->GetObjectArrayElement(args, 0);
-		const char* eventName = jenv->GetStringUTFChars(packageName, nullptr);
+		const char* eventName = jenv->GetStringUTFChars(str, nullptr);
 		printf("SomeEvent: %s\n", eventName);
 		if (strcmp(eventName, "GlobalUI:DispatchToUI") == 0) {
 			printf("DISPATCH #1\n");
