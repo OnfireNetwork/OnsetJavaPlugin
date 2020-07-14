@@ -125,7 +125,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		printf("SomeEvent: %s\n", eventName);
 		if (strcmp(eventName, "GlobalUI:DispatchToUI") == 0) {
 			printf("DISPATCH #1\n");
-			if (dispatchCount > 20) {
+			if (dispatchCount > 100) {
 				printf("DISPATCH #2\n");
 				jenv->ReleaseStringUTFChars(str, eventName);
 				jenv->ReleaseStringUTFChars(packageName, packageNameStr);
