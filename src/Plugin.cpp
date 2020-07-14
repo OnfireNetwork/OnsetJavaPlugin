@@ -125,19 +125,18 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		printf("SomeEvent: %s\n", eventName);
 		if (strcmp(eventName, "GlobalUI:DispatchToUI") == 0) {
 			printf("DISPATCH #1\n");
-			if (dispatchCount > 100) {
+			if (dispatchCount > 85) {
 				printf("DISPATCH #2\n");
 				jenv->ReleaseStringUTFChars(str, eventName);
 				jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 				jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 				jenv->DeleteLocalRef(str);
-				jenv->DeleteLocalRef(objectCls);
 				jenv->DeleteLocalRef(packageName);
 				jenv->DeleteLocalRef(functionName);
 				jenv->DeleteLocalRef(args);
 				jobjectArray returns = jenv->NewObjectArray((jsize)0, objectCls, NULL);
+				jenv->DeleteLocalRef(objectCls);
 				lastReturn = returns;
-				printf("DISPATCH #3\n");
 				return returns;
 			}
 			dispatchCount++;
