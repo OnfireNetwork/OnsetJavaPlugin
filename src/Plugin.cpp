@@ -103,8 +103,10 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 }
 
 jobjectArray lastReturn;
+int dispatchCount = 0;
 
 jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
+	jenv->DeleteLocalRef(jcl);
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return NULL;
@@ -114,6 +116,32 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 
 	const char* packageNameStr = jenv->GetStringUTFChars(packageName, nullptr);
 	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
+
+	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
+
+	if (strcmp(functionNameStr, "CallRemoteEvent") == 0) {
+		jstring str = (jstring)jenv->GetObjectArrayElement(args, 0);
+		const char* eventName = jenv->GetStringUTFChars(packageName, nullptr);
+		if (strcmp(eventName, "GlobalUI:DispatchToUI") == 0) {
+			if (dispatchCount > 10) {
+				jenv->ReleaseStringUTFChars(str, eventName);
+				jenv->ReleaseStringUTFChars(packageName, packageNameStr);
+				jenv->ReleaseStringUTFChars(functionName, functionNameStr);
+				jenv->DeleteLocalRef(str);
+				jenv->DeleteLocalRef(objectCls);
+				jenv->DeleteLocalRef(packageName);
+				jenv->DeleteLocalRef(functionName);
+				jenv->DeleteLocalRef(args);
+				jobjectArray returns = jenv->NewObjectArray((jsize)0, objectCls, NULL);
+				lastReturn = returns;
+				return lastReturn;
+			}
+			dispatchCount++;
+		}
+		jenv->ReleaseStringUTFChars(str, eventName);
+		jenv->DeleteLocalRef(str);
+	}
+
 	int argsLength = jenv->GetArrayLength(args);
 	auto luaArgs = new Lua::LuaArgs_t();
 	for (jsize i = 0; i < argsLength; i++) {
@@ -123,7 +151,6 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, luaArgs);
 	delete luaArgs;
 	size_t returnsLength = luaReturns.size();
-	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
 	for (jsize i = 0; i < (int) returnsLength; i++) {
 		jobject obj = env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]);
@@ -142,9 +169,6 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 }
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
-	printf("Cleaning!!!");
-	(void)jenv;
-	(void)jcl;
 	jenv->DeleteLocalRef(jcl);
 	jenv->DeleteLocalRef(lastReturn);
 }
