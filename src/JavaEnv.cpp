@@ -91,7 +91,6 @@ JavaEnv::JavaEnv(std::string classPath) {
 void JavaEnv::LuaFunctionClose(jobject instance) {
 	jfieldID fField = this->env->GetFieldID(this->luaFunctionClass, "f", "I");
 	int id = this->env->GetIntField(instance, fField);
-	this->luaFunctions[id].~LuaValue();
 	this->luaFunctions[id] = NULL;
 	this->env->DeleteLocalRef(instance);
 }
@@ -127,7 +126,6 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 			this->env->SetObjectArrayElement(returns, i, obj);
 			this->env->DeleteLocalRef(obj);
 		}
-		ReturnValues.~vector();
 		return returns;
 	}
 	return NULL;
@@ -141,7 +139,6 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 	case Lua::LuaValue::Type::STRING:
 	{
 		jobject obj = (jobject)jenv->NewStringUTF(value.GetValue<std::string>().c_str());
-		value.~LuaValue();
 		return obj;
 	} break;
 	case Lua::LuaValue::Type::INTEGER:
@@ -180,7 +177,6 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 			jenv->DeleteLocalRef(objv);
 			});
 		jenv->DeleteLocalRef(jcls);
-		value.~LuaValue();
 		return jmap;
 	} break;
 	case Lua::LuaValue::Type::FUNCTION:
@@ -200,7 +196,6 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 		this->env->SetObjectField(javaLuaFunction, pField, packageName);
 		this->env->DeleteLocalRef(packageName);
-		value.~LuaValue();
 		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
@@ -292,7 +287,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 		jmethodID getMethod = jenv->GetMethodID(jcls, "get", "(I)Ljava/lang/Object;");
 		jint len = jenv->CallIntMethod(object, sizeMethod);
 
-		Lua::LuaTable_t table(new Lua::LuaTable);
+		Lua::LuaTable_t table = Lua::LuaTable::Create();
 		for (jint i = 0; i < len; i++) {
 			jobject arrayElement = jenv->CallObjectMethod(object, getMethod, i);
 			table->Add(i + 1, this->ToLuaValue(arrayElement));
@@ -319,7 +314,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 		jenv->DeleteLocalRef(keySet);
 		int arraySize = jenv->GetArrayLength(keyArray);
 
-		Lua::LuaTable_t table(new Lua::LuaTable);
+		Lua::LuaTable_t table = Lua::LuaTable::Create();
 		for (int i = 0; i < arraySize; i++)
 		{
 			jobject key = jenv->GetObjectArrayElement(keyArray, i);
