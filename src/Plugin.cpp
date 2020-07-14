@@ -142,6 +142,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 }
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
+	printf("Cleaning!!!");
 	(void)jenv;
 	(void)jcl;
 	jenv->DeleteLocalRef(jcl);
