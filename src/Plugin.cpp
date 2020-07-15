@@ -108,6 +108,9 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jenv->DeleteLocalRef(jcl);
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
+		jenv->DeleteLocalRef(packageName);
+		jenv->DeleteLocalRef(functionName);
+		jenv->DeleteLocalRef(args);
 		return NULL;
 	}
 
@@ -117,34 +120,6 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
 
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
-	/*
-	printf("SomeFunction: %s\n", functionNameStr);
-	if (strcmp(functionNameStr, "CallRemoteEvent") == 0) {
-		jstring str = (jstring)jenv->GetObjectArrayElement(args, 1);
-		const char* eventName = jenv->GetStringUTFChars(str, nullptr);
-		printf("SomeEvent: %s\n", eventName);
-		if (strcmp(eventName, "GlobalUI:DispatchToUI") == 0) {
-			printf("DISPATCH #1\n");
-			if (dispatchCount > 85) {
-				printf("DISPATCH #2\n");
-				jenv->ReleaseStringUTFChars(str, eventName);
-				jenv->ReleaseStringUTFChars(packageName, packageNameStr);
-				jenv->ReleaseStringUTFChars(functionName, functionNameStr);
-				jenv->DeleteLocalRef(str);
-				jenv->DeleteLocalRef(packageName);
-				jenv->DeleteLocalRef(functionName);
-				jenv->DeleteLocalRef(args);
-				jobjectArray returns = jenv->NewObjectArray((jsize)0, objectCls, NULL);
-				jenv->DeleteLocalRef(objectCls);
-				lastReturn = returns;
-				return returns;
-			}
-			dispatchCount++;
-		}
-		jenv->ReleaseStringUTFChars(str, eventName);
-		jenv->DeleteLocalRef(str);
-	}
-	*/
 	int argsLength = jenv->GetArrayLength(args);
 	Lua::LuaArgs_t luaArgs;
 	for (jsize i = 0; i < argsLength; i++) {
@@ -161,8 +136,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	}
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
-	jenv->DeleteLocalRef(jcl);
-	jenv->DeleteLocalRef(objectCls);
+	jenv->DeleteGlobalRef(objectCls);
 	jenv->DeleteLocalRef(packageName);
 	jenv->DeleteLocalRef(functionName);
 	jenv->DeleteLocalRef(args);
@@ -172,7 +146,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
 	jenv->DeleteLocalRef(jcl);
-	jenv->DeleteLocalRef(lastReturn);
+	jenv->DeleteGlobalRef(lastReturn);
 }
 
 Plugin::Plugin()
