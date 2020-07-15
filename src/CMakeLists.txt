@@ -1,5 +1,8 @@
 set(PLUGIN_CONFIG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/config_headers")
+
+if(UNIX)
 link_libraries(stdc++fs)
+endif()
 
 configure_file(
 	"version.hpp.in"
