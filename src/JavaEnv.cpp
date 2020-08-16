@@ -194,7 +194,15 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 	JNIEnv* jenv = this->GetEnv();
 	jclass jcls = jenv->GetObjectClass(object);
 
-	if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/String"))) {
+	jclass stringClass = jenv->FindClass("java/lang/String");
+	jclass integerClass = jenv->FindClass("java/lang/Integer");
+	jclass doubleClass = jenv->FindClass("java/lang/Double");
+	jclass booleanClass = jenv->FindClass("java/lang/Boolean");
+	jclass listClass = jenv->FindClass("java/util/List");
+	jclass mapClass = jenv->FindClass("java/util/Map");
+
+
+	if (jenv->IsInstanceOf(object, stringClass)) {
 		jstring element = (jstring)object;
 		const char* pchars = jenv->GetStringUTFChars(element, nullptr);
 
@@ -202,31 +210,66 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 
 		jenv->ReleaseStringUTFChars(element, pchars);
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
 
 		return value;
 	}
-	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Integer"))) {
+	else if (jenv->IsInstanceOf(object, integerClass)) {
 		jmethodID intValueMethod = jenv->GetMethodID(jcls, "intValue", "()I");
 		jint result = jenv->CallIntMethod(object, intValueMethod);
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
+
 		Lua::LuaValue value(result);
 		return value;
 	}
-	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Double"))) {
+	else if (jenv->IsInstanceOf(object, doubleClass)) {
 		jmethodID doubleValueMethod = jenv->GetMethodID(jcls, "doubleValue", "()D");
 		jdouble result = jenv->CallDoubleMethod(object, doubleValueMethod);
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
+
 		Lua::LuaValue value(result);
 		return value;
 	}
-	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Boolean"))) {
+	else if (jenv->IsInstanceOf(object, booleanClass)) {
 		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
 		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
+
 		Lua::LuaValue value((bool)result);
 		return value;
 	}
-	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/util/List"))) {
+	else if (jenv->IsInstanceOf(object, listClass)) {
 		jmethodID sizeMethod = jenv->GetMethodID(jcls, "size", "()I");
 		jmethodID getMethod = jenv->GetMethodID(jcls, "get", "(I)Ljava/lang/Object;");
 		jint len = jenv->CallIntMethod(object, sizeMethod);
@@ -237,16 +280,25 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 			table->Add(i + 1, this->ToLuaValue(arrayElement));
 		}
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
+
 		Lua::LuaValue value(table);
 		return value;
 	}
-	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/util/Map"))) {
+	else if (jenv->IsInstanceOf(object, mapClass)) {
 		jmethodID getMethod = jenv->GetMethodID(jcls, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
 
 		jmethodID keySetMethod = jenv->GetMethodID(jcls, "keySet", "()Ljava/util/Set;");
 		jobject keySet = jenv->CallObjectMethod(object, keySetMethod);
-
-		jmethodID keySetToArrayMethod = jenv->GetMethodID(jenv->GetObjectClass(keySet), "toArray", "()[Ljava/lang/Object;");
+		jclass keySetClass = jenv->GetObjectClass(keySet);
+		jmethodID keySetToArrayMethod = jenv->GetMethodID(keySetClass, "toArray", "()[Ljava/lang/Object;");
 		jobjectArray keyArray = (jobjectArray)jenv->CallObjectMethod(keySet, keySetToArrayMethod);
 		int arraySize = jenv->GetArrayLength(keyArray);
 
@@ -259,9 +311,29 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 			table->Add(this->ToLuaValue(key), this->ToLuaValue(value));
 		}
 		jenv->DeleteGlobalRef(object);
+		jenv->DeleteGlobalRef(jcls);
+		jenv->DeleteGlobalRef(keySet);
+		jenv->DeleteGlobalRef(keySetClass);
+		jenv->DeleteGlobalRef(keyArray);
+
+		jenv->DeleteGlobalRef(stringClass);
+		jenv->DeleteGlobalRef(integerClass);
+		jenv->DeleteGlobalRef(doubleClass);
+		jenv->DeleteGlobalRef(booleanClass);
+		jenv->DeleteGlobalRef(listClass);
+		jenv->DeleteGlobalRef(mapClass);
+
 		Lua::LuaValue value(table);
 		return value;
 	}
+
+	jenv->DeleteGlobalRef(jcls);
+	jenv->DeleteGlobalRef(stringClass);
+	jenv->DeleteGlobalRef(integerClass);
+	jenv->DeleteGlobalRef(doubleClass);
+	jenv->DeleteGlobalRef(booleanClass);
+	jenv->DeleteGlobalRef(listClass);
+	jenv->DeleteGlobalRef(mapClass);
 
 	return NULL;
 }
@@ -354,5 +426,9 @@ jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::
 			break;
 		}
 	}
+	for (int i = 0; i < paramsLength; i++) {
+		this->env->DeleteGlobalRef(params[i]);
+	}
+	this->env->DeleteGlobalRef(clazz);
 	return returnValue;
 }
