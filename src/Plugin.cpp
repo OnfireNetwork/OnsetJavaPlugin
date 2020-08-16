@@ -101,16 +101,12 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	jenv->DeleteLocalRef(argsList);
 }
 
-jobjectArray lastReturn;
 int dispatchCount = 0;
 
 jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
 	jenv->DeleteLocalRef(jcl);
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
-		jenv->DeleteLocalRef(packageName);
-		jenv->DeleteLocalRef(functionName);
-		jenv->DeleteLocalRef(args);
 		return NULL;
 	}
 
@@ -140,16 +136,11 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	jenv->DeleteGlobalRef(objectCls);
-	jenv->DeleteLocalRef(packageName);
-	jenv->DeleteLocalRef(functionName);
-	jenv->DeleteLocalRef(args);
-	lastReturn = returns;
 	return returns;
 }
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
 	jenv->DeleteLocalRef(jcl);
-	jenv->DeleteGlobalRef(lastReturn);
 }
 
 Plugin::Plugin()
