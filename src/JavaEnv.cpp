@@ -226,28 +226,28 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 
 		jenv->ReleaseStringUTFChars(element, pchars);
 
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 
 		return value;
 	}
 	else if (jenv->IsInstanceOf(object, integerCls)) {
 		jmethodID intValueMethod = jenv->GetMethodID(jcls, "intValue", "()I");
 		jint result = jenv->CallIntMethod(object, intValueMethod);
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 
 		Lua::LuaValue value(result);
 		return value;
@@ -255,14 +255,14 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 	else if (jenv->IsInstanceOf(object, doubleCls)) {
 		jmethodID doubleValueMethod = jenv->GetMethodID(jcls, "doubleValue", "()D");
 		jdouble result = jenv->CallDoubleMethod(object, doubleValueMethod);
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 
 		Lua::LuaValue value(result);
 		return value;
@@ -270,14 +270,14 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 	else if (jenv->IsInstanceOf(object, booleanCls)) {
 		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
 		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 
 		Lua::LuaValue value((bool) result);
 		return value;
@@ -292,14 +292,14 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 			jobject arrayElement = jenv->CallObjectMethod(object, getMethod, i);
 			table->Add(i + 1, this->ToLuaValue(arrayElement));
 		}
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 		Lua::LuaValue value(table);
 		return value;
 	}
@@ -311,7 +311,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 
 		jmethodID keySetToArrayMethod = jenv->GetMethodID(jenv->GetObjectClass(keySet), "toArray", "()[Ljava/lang/Object;");
 		jobjectArray keyArray = (jobjectArray)jenv->CallObjectMethod(keySet, keySetToArrayMethod);
-		jenv->DeleteLocalRef(keySet);
+		//jenv->DeleteLocalRef(keySet);
 		int arraySize = jenv->GetArrayLength(keyArray);
 
 		Lua::LuaTable_t table = Lua::LuaTable::Create();
@@ -322,19 +322,19 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 
 			table->Add(this->ToLuaValue(key), this->ToLuaValue(value));
 		}
-		jenv->DeleteGlobalRef(keyArray);
-		jenv->DeleteGlobalRef(object);
-		jenv->DeleteGlobalRef(jcls);
-		jenv->DeleteGlobalRef(stringCls);
-		jenv->DeleteGlobalRef(integerCls);
-		jenv->DeleteGlobalRef(doubleCls);
-		jenv->DeleteGlobalRef(booleanCls);
-		jenv->DeleteGlobalRef(listCls);
-		jenv->DeleteGlobalRef(mapCls);
+		//jenv->DeleteGlobalRef(keyArray);
+		//jenv->DeleteGlobalRef(object);
+		//jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(stringCls);
+		//jenv->DeleteGlobalRef(integerCls);
+		//jenv->DeleteGlobalRef(doubleCls);
+		//jenv->DeleteGlobalRef(booleanCls);
+		//jenv->DeleteGlobalRef(listCls);
+		//jenv->DeleteGlobalRef(mapCls);
 		Lua::LuaValue value(table);
 		return value;
 	}
-	jenv->DeleteGlobalRef(object);
+	//jenv->DeleteGlobalRef(object);
 	return NULL;
 }
 
@@ -426,9 +426,9 @@ jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::
 			break;
 		}
 	}
-	this->env->DeleteGlobalRef(clazz);
+	//this->env->DeleteGlobalRef(clazz);
 	for (size_t i = 0; i < paramsLength; i++) {
-		this->env->DeleteGlobalRef(params[i]);
+		//this->env->DeleteGlobalRef(params[i]);
 	}
 	return returnValue;
 }
