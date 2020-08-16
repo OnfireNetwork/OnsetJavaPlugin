@@ -96,15 +96,15 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	Onset::Plugin::Get()->CallEvent(eventStr, &args);
 
 	jenv->ReleaseStringUTFChars(event, eventStr);
-	//jenv->DeleteLocalRef(jcl);
-	//jenv->DeleteLocalRef(event);
-	//jenv->DeleteLocalRef(argsList);
+	jenv->DeleteLocalRef(jcl);
+	jenv->DeleteLocalRef(event);
+	jenv->DeleteLocalRef(argsList);
 }
 
 int dispatchCount = 0;
 
 jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring functionName, jobjectArray args) {
-	//jenv->DeleteLocalRef(jcl);
+	jenv->DeleteLocalRef(jcl);
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return NULL;
@@ -133,17 +133,16 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		//env->GetEnv()->DeleteLocalRef(obj);
 	}
 	printf("After CallGlobal: %s\n", functionNameStr);
-	//jenv->ReleaseStringUTFChars(packageName, packageNameStr);
+	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 	printf("FuckYouJava\n");
-	//jenv->ReleaseStringUTFChars(functionName, functionNameStr);
+	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	//jenv->DeleteGlobalRef(objectCls);
 	printf("Testing\n");
 	return returns;
 }
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
-	jenv;
-	jcl;
+	jenv->DeleteLocalRef(jcl);
 }
 
 Plugin::Plugin()
