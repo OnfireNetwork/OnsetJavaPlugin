@@ -119,6 +119,8 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	const char* packageNameStr = jenv->GetStringUTFChars(packageName, nullptr);
 	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
 
+	printf("Before CallGlobal: %s", functionNameStr);
+
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	int argsLength = jenv->GetArrayLength(args);
 	Lua::LuaArgs_t luaArgs;
@@ -134,6 +136,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 		jenv->SetObjectArrayElement(returns, i, obj);
 		env->GetEnv()->DeleteLocalRef(obj);
 	}
+	printf("After CallGlobal: %s", functionNameStr);
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	jenv->DeleteGlobalRef(objectCls);
