@@ -426,7 +426,7 @@ jobject JavaEnv::CallStatic(std::string className, std::string methodName, std::
 			break;
 		}
 	}
-	for (int i = 0; i < paramsLength; i++) {
+	for (size_t i = 0; i < paramsLength; i++) {
 		this->env->DeleteGlobalRef(params[i]);
 	}
 	this->env->DeleteGlobalRef(clazz);
