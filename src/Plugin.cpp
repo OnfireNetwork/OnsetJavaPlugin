@@ -219,6 +219,7 @@ LUA_DEFINE(CallJavaStaticMethod)
 		params[i - 4] = env->ToJavaObject(L, value);
 	}
 	jobject returnValue = Plugin::Get()->GetJavaEnv(id)->CallStatic(className, methodName, signature, params, arg_size - 4);
+	delete[] params;
 	if (returnValue != NULL) {
 		Lua::LuaValue value = env->ToLuaValue(returnValue);
 		if (!(value == NULL)) {
