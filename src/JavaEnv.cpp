@@ -201,28 +201,28 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 		Lua::LuaValue value(pchars);
 
 		jenv->ReleaseStringUTFChars(element, pchars);
-		jenv->DeleteLocalRef(element);
+		jenv->DeleteGlobalRef(object);
 
 		return value;
 	}
 	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Integer"))) {
 		jmethodID intValueMethod = jenv->GetMethodID(jcls, "intValue", "()I");
 		jint result = jenv->CallIntMethod(object, intValueMethod);
-
+		jenv->DeleteGlobalRef(object);
 		Lua::LuaValue value(result);
 		return value;
 	}
 	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Double"))) {
 		jmethodID doubleValueMethod = jenv->GetMethodID(jcls, "doubleValue", "()D");
 		jdouble result = jenv->CallDoubleMethod(object, doubleValueMethod);
-
+		jenv->DeleteGlobalRef(object);
 		Lua::LuaValue value(result);
 		return value;
 	}
 	else if (jenv->IsInstanceOf(object, jenv->FindClass("java/lang/Boolean"))) {
 		jmethodID boolValueMethod = jenv->GetMethodID(jcls, "booleanValue", "()Z");
 		jboolean result = jenv->CallBooleanMethod(object, boolValueMethod);
-
+		jenv->DeleteGlobalRef(object);
 		Lua::LuaValue value((bool)result);
 		return value;
 	}
@@ -236,7 +236,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 			jobject arrayElement = jenv->CallObjectMethod(object, getMethod, i);
 			table->Add(i + 1, this->ToLuaValue(arrayElement));
 		}
-
+		jenv->DeleteGlobalRef(object);
 		Lua::LuaValue value(table);
 		return value;
 	}
@@ -258,7 +258,7 @@ Lua::LuaValue JavaEnv::ToLuaValue(jobject object)
 
 			table->Add(this->ToLuaValue(key), this->ToLuaValue(value));
 		}
-
+		jenv->DeleteGlobalRef(object);
 		Lua::LuaValue value(table);
 		return value;
 	}
