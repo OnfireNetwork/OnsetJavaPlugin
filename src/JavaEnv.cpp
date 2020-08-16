@@ -145,21 +145,21 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 	{
 		jclass jcls = jenv->FindClass("java/lang/Integer");
 		jobject obj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(I)V"), value.GetValue<int>());
-		jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(jcls);
 		return obj;
 	} break;
 	case Lua::LuaValue::Type::NUMBER:
 	{
 		jclass jcls = jenv->FindClass("java/lang/Double");
 		jobject obj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(D)V"), value.GetValue<double>());
-		jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(jcls);
 		return obj;
 	} break;
 	case Lua::LuaValue::Type::BOOLEAN:
 	{
 		jclass jcls = jenv->FindClass("java/lang/Boolean");
 		jobject obj = jenv->NewObject(jcls, jenv->GetMethodID(jcls, "<init>", "(Z)V"), value.GetValue<bool>());
-		jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(jcls);
 		return obj;
 	} break;
 	case Lua::LuaValue::Type::TABLE:
@@ -173,10 +173,10 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 			jobject objk = this->ToJavaObject(L, k);
 			jobject objv = this->ToJavaObject(L, v);
 			jenv->CallObjectMethod(jmap, putMethod, objk, objv);
-			jenv->DeleteGlobalRef(objk);
-			jenv->DeleteGlobalRef(objv);
+			//jenv->DeleteGlobalRef(objk);
+			//jenv->DeleteGlobalRef(objv);
 			});
-		jenv->DeleteGlobalRef(jcls);
+		//jenv->DeleteGlobalRef(jcls);
 		return jmap;
 	} break;
 	case Lua::LuaValue::Type::FUNCTION:
@@ -195,7 +195,7 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 		this->env->SetIntField(javaLuaFunction, fField, id);
 		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 		this->env->SetObjectField(javaLuaFunction, pField, packageName);
-		this->env->DeleteGlobalRef(packageName);
+		//this->env->DeleteGlobalRef(packageName);
 		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
