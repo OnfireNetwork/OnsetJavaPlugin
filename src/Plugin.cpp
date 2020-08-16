@@ -134,9 +134,10 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	}
 	printf("After CallGlobal: %s\n", functionNameStr);
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
+	printf("FuckYouJava\n");
 	jenv->ReleaseStringUTFChars(functionName, functionNameStr);
 	//jenv->DeleteGlobalRef(objectCls);
-	printf("Testing");
+	printf("Testing\n");
 	return returns;
 }
 
