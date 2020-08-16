@@ -130,7 +130,7 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	for (jsize i = 0; i < (int) returnsLength; i++) {
 		jobject obj = env->ToJavaObject(Plugin::Get()->GetPackageState(packageNameStr), luaReturns[i]);
 		jenv->SetObjectArrayElement(returns, i, obj);
-		//env->GetEnv()->DeleteLocalRef(obj);
+		env->GetEnv()->DeleteLocalRef(obj);
 	}
 	printf("After CallGlobal: %s\n", functionNameStr);
 	jenv->ReleaseStringUTFChars(packageName, packageNameStr);
