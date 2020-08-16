@@ -101,6 +101,7 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 	jstring packageName = (jstring)this->env->GetObjectField(instance, pField);
 	const char* packageNameStr = this->env->GetStringUTFChars(packageName, nullptr);
 	lua_State* L = Plugin::Get()->GetPackageState(packageNameStr);
+	this->env->ReleaseStringUTFChars(packageName, packageNameStr);
 	this->env->DeleteLocalRef(packageName);
 	int argsLength = this->env->GetArrayLength(args);
 	Lua::PushValueToLua(this->luaFunctions[id], L);
@@ -116,8 +117,11 @@ jobjectArray JavaEnv::LuaFunctionCall(jobject instance, jobjectArray args) {
 		jclass objectCls = this->env->FindClass("Ljava/lang/Object;");
 		jobjectArray returns = this->env->NewObjectArray((jsize)returnCount, objectCls, NULL);
 		for (jsize i = 0; i < (int)returnCount; i++) {
-			this->env->SetObjectArrayElement(returns, i, this->ToJavaObject(L, ReturnValues[i]));
+			jobject o = this->ToJavaObject(L, ReturnValues[i]);
+			this->env->SetObjectArrayElement(returns, i, o);
+			this->env->DeleteGlobalRef(o);
 		}
+		this->env->DeleteGlobalRef(objectCls);
 		return returns;
 	}
 	return NULL;
@@ -155,8 +159,12 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 
 		Lua::LuaTable_t table = value.GetValue<Lua::LuaTable_t>();
 		table->ForEach([jenv, this, L, jmap, putMethod](Lua::LuaValue k, Lua::LuaValue v) {
-			jenv->CallObjectMethod(jmap, putMethod, this->ToJavaObject(L, k), this->ToJavaObject(L, v));
-			});
+			jobject jk = this->ToJavaObject(L, k);
+			jobject jv = this->ToJavaObject(L, v);
+			jenv->CallObjectMethod(jmap, putMethod, jk, jv);
+			jenv->DeleteGlobalRef(jk);
+			jenv->DeleteGlobalRef(jv);
+		});
 
 		return jmap;
 	} break;
@@ -176,7 +184,7 @@ jobject JavaEnv::ToJavaObject(lua_State* L, Lua::LuaValue value)
 		this->env->SetIntField(javaLuaFunction, fField, id);
 		jfieldID pField = this->env->GetFieldID(this->luaFunctionClass, "p", "Ljava/lang/String;");
 		this->env->SetObjectField(javaLuaFunction, pField, packageName);
-		this->env->DeleteLocalRef(packageName);
+		this->env->DeleteGlobalRef(packageName);
 		return javaLuaFunction;
 	} break;
 	case Lua::LuaValue::Type::NIL:
