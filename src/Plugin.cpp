@@ -78,6 +78,7 @@ JavaEnv* Plugin::FindJavaEnv(JNIEnv* jenv) {
 }
 
 void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
+	(void)jcl;
 	JavaEnv* env = Plugin::Get()->FindJavaEnv(jenv);
 	if (env == nullptr) {
 		return;
@@ -95,7 +96,7 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 
 	Onset::Plugin::Get()->CallEvent(eventStr, &args);
 
-	jenv->ReleaseStringUTFChars(event, eventStr);
+	//jenv->ReleaseStringUTFChars(event, eventStr);
 	//jenv->DeleteLocalRef(jcl);
 	//jenv->DeleteLocalRef(event);
 	//jenv->DeleteLocalRef(argsList);
@@ -142,8 +143,8 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 }
 
 void CleanGlobal(JNIEnv* jenv, jclass jcl) {
-	jenv;
-	jcl;
+	(void) jenv;
+	(void) jcl;
 }
 
 Plugin::Plugin()
