@@ -20,17 +20,17 @@ private:
 	std::map<lua_State*, std::string> statePackages;
 
 private:
-	using FuncInfo_t = std::tuple<const char *, lua_CFunction>;
+	using FuncInfo_t = std::tuple<const char*, lua_CFunction>;
 	std::vector<FuncInfo_t> _func_list;
 
 private:
-	inline void Define(const char * name, lua_CFunction func)
+	inline void Define(const char* name, lua_CFunction func)
 	{
 		_func_list.emplace_back(name, func);
 	}
 
 public:
-	decltype(_func_list) const &GetFunctions() const
+	decltype(_func_list) const& GetFunctions() const
 	{
 		return _func_list;
 	}

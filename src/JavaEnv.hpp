@@ -29,4 +29,3 @@ public:
 	void LuaFunctionClose(jobject instance);
 	jobject CallStatic(std::string className, std::string methodName, std::string signature, jobject* params, size_t paramsLength);
 };
-
