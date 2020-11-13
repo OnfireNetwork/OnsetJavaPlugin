@@ -16,6 +16,31 @@ You can use our [language framework](https://github.com/OnfireNetwork/OnsetJava)
 2. Ensure Java 8 JDK/JRE 64bit is installed.
 3. Enable "OnsetJavaPlugin" as a plugin inside server_config.json.
 
+#### Compiling from source
+##### Ubuntu 18.04
+```
+# Compiling the plugin requires GCC8 because of <filesystem> usage.
+
+apt install openjdk-8-jdk openjdk-8-jre maven gcc-8 g++-8
+
+export CC=/usr/bin/gcc-8
+export CXX=/usr/bin/g++-8
+
+git clone --recurse-submodules https://github.com/OnfireNetwork/OnsetJavaPlugin
+cd OnsetJavaPlugin
+cmake .
+make
+
+# Copy src/OnsetJavaPlugin.so to your OnsetServer/plugins folder.
+```
+##### Compiling OnsetJavaPluginSupport
+```
+cd OnsetJavaPluginSupport
+mvn package
+
+# Copy OnsetJavaPluginSupport/target/OnsetJavaPluginSupport-1.0.jar to your OnsetServer/java folder.
+```
+
 ### Data Types we support
 #### Method Parameters
 * Lua String -> String (java.lang.String)
