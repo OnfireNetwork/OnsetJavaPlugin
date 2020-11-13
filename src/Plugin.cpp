@@ -81,16 +81,16 @@ void CallEvent(JNIEnv* jenv, jclass jcl, jstring event, jobjectArray argsList) {
 	(void)jcl;
 
 	const char* eventStr = jenv->GetStringUTFChars(event, nullptr);
-	auto args = new Lua::LuaArgs_t();
+	Lua::LuaArgs_t args;
 
 	int argsCount = jenv->GetArrayLength(argsList);
 
 	for (jsize i = 0; i < argsCount; i++) {
 		jobject arrayElement = jenv->GetObjectArrayElement(argsList, i);
-		args->push_back(env->ToLuaValue(arrayElement));
+		args.push_back(env->ToLuaValue(arrayElement));
 	}
 
-	Onset::Plugin::Get()->CallEvent(eventStr, args);
+	Onset::Plugin::Get()->CallEvent(eventStr, &args);
 
 	jenv->ReleaseStringUTFChars(event, eventStr);
 }
@@ -106,12 +106,12 @@ jobjectArray CallGlobal(JNIEnv* jenv, jclass jcl, jstring packageName, jstring f
 	const char* packageNameStr = jenv->GetStringUTFChars(packageName, nullptr);
 	const char* functionNameStr = jenv->GetStringUTFChars(functionName, nullptr);
 	int argsLength = jenv->GetArrayLength(args);
-	auto luaArgs = new Lua::LuaArgs_t();
+	Lua::LuaArgs_t luaArgs;
 	for (jsize i = 0; i < argsLength; i++) {
-		luaArgs->push_back(env->ToLuaValue(jenv->GetObjectArrayElement(args, i)));
+		luaArgs.push_back(env->ToLuaValue(jenv->GetObjectArrayElement(args, i)));
 	}
 
-	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, luaArgs);
+	auto luaReturns = CallLuaFunction(Plugin::Get()->GetPackageState(packageNameStr), functionNameStr, &luaArgs);
 	size_t returnsLength = luaReturns.size();
 	jclass objectCls = jenv->FindClass("Ljava/lang/Object;");
 	jobjectArray returns = jenv->NewObjectArray((jsize)returnsLength, objectCls, NULL);
